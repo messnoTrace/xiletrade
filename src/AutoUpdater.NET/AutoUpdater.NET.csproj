@@ -30,7 +30,7 @@
         <PackageOutputPath>build</PackageOutputPath>
         <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
         <LangVersion>default</LangVersion>
-        <Platforms>AnyCPU</Platforms>
+        <Platforms>AnyCPU;x64</Platforms>
         <!--
         <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
         <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
@@ -52,7 +52,17 @@
       <OutputPath>bin\Debug\</OutputPath>
       <DocumentationFile>$(OutputPath)\$(Configuration)\AutoUpdater.NET.xml</DocumentationFile>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      <DefineConstants>DEBUG;TRACE</DefineConstants>
+      <WarningLevel>2</WarningLevel>
+      <OutputPath>bin\Debug\</OutputPath>
+      <DocumentationFile>$(OutputPath)\$(Configuration)\AutoUpdater.NET.xml</DocumentationFile>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+      <DebugType>none</DebugType>
+      <DebugSymbols>false</DebugSymbols>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       <DebugType>none</DebugType>
       <DebugSymbols>false</DebugSymbols>
     </PropertyGroup>

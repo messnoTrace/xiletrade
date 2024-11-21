@@ -15,6 +15,7 @@
     <PackageProjectUrl>https://github.com/maxensas/xiletrade</PackageProjectUrl>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <DebugType>none</DebugType>

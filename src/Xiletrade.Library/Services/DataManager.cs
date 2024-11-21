@@ -371,4 +371,19 @@ internal sealed class DataManager
         }
         return false;
     }
+
+
+    internal static void ShowCookieEmptyMsg()
+    {
+
+            var service = _serviceProvider.GetRequiredService<IMessageAdapterService>();
+            service.Show("Cookie没填写","提示", MessageStatus.Information);
+    }
+
+    internal static void showTest(string text)
+    {
+
+        var service = _serviceProvider.GetRequiredService<IMessageAdapterService>();
+        service.Show(text, "提示", MessageStatus.Information);
+    }
 }

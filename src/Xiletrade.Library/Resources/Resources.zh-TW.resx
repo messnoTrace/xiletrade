@@ -1810,11 +1810,6 @@
   <data name="Start002_lblSelect" xml:space="preserve">
     <value>選擇遊戲和Xiletrade中使用的語言：</value>
   </data>
-  <data name="Start003_tbMessage1" xml:space="preserve">
-    <value>XileTrade是一個免費工具，可增強“流亡之路”上的交易體驗。 它使您可以快速找到商品的價格。
-
-該程序是免費開發的，必須維護才能正常工作。 如果您喜歡該程序和/或想要更多功能，請考慮做出貢獻。</value>
-  </data>
   <data name="Start004_btnClose" xml:space="preserve">
     <value>關</value>
   </data>

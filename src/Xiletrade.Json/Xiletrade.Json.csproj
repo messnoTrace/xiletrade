@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <Authors>maxensas</Authors>
     <Company>Toolcaps</Company>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Utf8Json">

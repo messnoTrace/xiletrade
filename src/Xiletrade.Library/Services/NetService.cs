@@ -70,6 +70,7 @@ public sealed class NetService
             HttpRequestMessage request = new();
             request.RequestUri = new Uri(urlString);
             request.Headers.ProxyAuthorization = null;
+            request.Headers.Add("Cookie", DataManager.Config.Options.TencentCookie);
             //request.Headers.UserAgent.Add(new ProductInfoHeaderValue(Strings.Net.UserAgent));
 
             request.Method = entity is not null ? HttpMethod.Post : HttpMethod.Get;

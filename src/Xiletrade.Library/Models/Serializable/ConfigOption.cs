@@ -129,4 +129,10 @@ public sealed class ConfigOption
     [DataMember(Name = "ninja_map_generation")]
     [JsonPropertyName("ninja_map_generation")]
     public string NinjaMapGeneration { get; set; } = null;
+
+
+
+    [DataMember(Name = "tencent_cookie")]
+    [JsonPropertyName("tencent_cookie")]
+    public string TencentCookie { get; set; } = "";
 }

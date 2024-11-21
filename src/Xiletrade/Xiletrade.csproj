@@ -14,7 +14,7 @@
     <PackageReleaseNotes>https://github.com/maxensas/xiletrade/releases</PackageReleaseNotes>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Platforms>AnyCPU</Platforms>
+    <Platforms>AnyCPU;x64</Platforms>
     <Authors>maxensas</Authors>
     <Company>Toolcaps</Company>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -39,7 +39,18 @@
     <DocumentationFile></DocumentationFile>
     <DebugType>portable</DebugType>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>2</WarningLevel>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DocumentationFile />
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>

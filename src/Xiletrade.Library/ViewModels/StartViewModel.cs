@@ -24,6 +24,9 @@ public sealed class StartViewModel : BaseViewModel
     private ConfigData Config { get; set; }
     private string ConfigBackup { get; set; }
 
+    public string CookieStr;
+
+
     public StartViewModel()
     {
         closeStart = new(OnCloseStart, CanCloseStart);
@@ -49,6 +52,9 @@ public sealed class StartViewModel : BaseViewModel
 
         System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.InstalledUICulture;
         TranslationViewModel.Instance.CurrentCulture = System.Globalization.CultureInfo.InstalledUICulture;
+
+        CookieStr = Config.Options.TencentCookie;
+
     }
 
     private bool CanCloseStart(object commandParameter)
@@ -56,12 +62,21 @@ public sealed class StartViewModel : BaseViewModel
         return true;
     }
 
+
     private void OnCloseStart(object commandParameter)
     {
         if (commandParameter is IViewBase view)
         {
+
+            if (string.IsNullOrEmpty(CookieStr)) {
+
+                DataManager.ShowCookieEmptyMsg();
+                return;
+            }
+
             Config.Options.Language = LanguageIndex;
 
+            Config.Options.TencentCookie = CookieStr;
             System.Globalization.CultureInfo cultureRefresh = System.Globalization.CultureInfo.CreateSpecificCulture(Strings.Culture[Config.Options.Language]);
             System.Threading.Thread.CurrentThread.CurrentUICulture = cultureRefresh;
             TranslationViewModel.Instance.CurrentCulture = cultureRefresh;

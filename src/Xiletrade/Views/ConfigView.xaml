@@ -251,8 +251,9 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
-                            <Label x:Name="lbLang" Content="{ext:Localization Config012_lbLang}" BorderThickness="0" Height="27" Margin="14,68,476,275" ToolTip="{ext:Localization Config050_lbLangTip}" Foreground="#FFC8C8C8" />
-                            <Image Margin="111,74,443,280" Height="16" Width="26">
+                            <!-- 不让选择语言 改成国服的Cookie-->
+                            <Label Visibility="Hidden" x:Name="lbLang" Content="{ext:Localization Config012_lbLang}" BorderThickness="0" Height="27" Margin="14,68,476,275" ToolTip="{ext:Localization Config050_lbLangTip}" Foreground="#FFC8C8C8" />
+                            <Image Visibility="Hidden" Margin="111,74,443,280" Height="16" Width="26">
                                 <Image.Style>
                                     <Style TargetType="{x:Type Image}">
                                         <Style.Triggers>
@@ -293,7 +294,7 @@
                                     </Style>
                                 </Image.Style>
                             </Image>
-                            <ComboBox x:Name="cbLanguage" Height="22" Margin="141,71,367,277" HorizontalContentAlignment="Center" ToolTip="{ext:Localization Config147_cbLanguageTip}" ItemsSource="{Binding General.Language}" SelectedIndex="{Binding General.LanguageIndex}">
+                            <ComboBox  Visibility="Hidden" x:Name="cbLanguage" Height="22" Margin="141,71,367,277" HorizontalContentAlignment="Center" ToolTip="{ext:Localization Config147_cbLanguageTip}" ItemsSource="{Binding General.Language}" SelectedIndex="{Binding General.LanguageIndex}">
                                 <ComboBox.Style>
                                     <Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource {x:Type ComboBox}}">
                                         <Style.Triggers>
@@ -315,6 +316,10 @@
                                     </Style>
                                 </ComboBox.Style>
                             </ComboBox>
+                            <Label Visibility="Hidden" Content="Cookie:" BorderThickness="0" Height="27" Margin="14,68,476,275"  Foreground="#FFC8C8C8" />
+                            <TextBox  Visibility="Hidden" x:Name="tbCookie" HorizontalAlignment="Left" Margin="108,69,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="105"/>
+
+
                             <Border BorderBrush="#FF333333" BorderThickness="1" HorizontalAlignment="Left" Height="1" Margin="-4,106,-4,0" VerticalAlignment="Top" Width="588" RenderTransformOrigin="0.5,0.5" />
 
 
