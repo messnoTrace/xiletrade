@@ -94,6 +94,7 @@
     <AdditionalProbingPath Include="$(TargetDir)bin" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="EventBinder" Version="2.5.3" />
     <PackageReference Include="FontAwesome5" Version="2.1.11" />
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
@@ -124,6 +125,15 @@
     <Delete Files="$(PublishDir)\Microsoft.Web.WebView2.Core.xml" />
     <Delete Files="$(PublishDir)\Microsoft.Web.WebView2.WinForms.xml" />
     <Delete Files="$(PublishDir)\Microsoft.Web.WebView2.Wpf.xml" />
+  </Target>
+
+  <ItemGroup>
+    <_CustomSourceFiles Include="..\Xiletrade.Updater\Native\win-x64\*.*" />
+  </ItemGroup>
+  <Target Name="CopyFiles" AfterTargets="Publish">
+    <Copy SourceFiles="@(_CustomSourceFiles)"
+          DestinationFolder="$(PublishDir)"
+          SkipUnchangedFiles="true" />
   </Target>
 </Project>
 
