@@ -43,6 +43,13 @@ Global
 		{FB9E7E6B-B19F-4F37-A708-2996190CEF13}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FB9E7E6B-B19F-4F37-A708-2996190CEF13}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FB9E7E6B-B19F-4F37-A708-2996190CEF13}.Release|Any CPU.Build.0 = Release|Any CPU
+<<<<<<< Updated upstream
+=======
+		{91DE558C-6DB8-429B-A069-C0491DCFF15B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91DE558C-6DB8-429B-A069-C0491DCFF15B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91DE558C-6DB8-429B-A069-C0491DCFF15B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91DE558C-6DB8-429B-A069-C0491DCFF15B}.Release|Any CPU.Build.0 = Release|Any CPU
+>>>>>>> Stashed changes
 		{4AA7DCC3-3785-4E7A-A5DC-87A8857A1959}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4AA7DCC3-3785-4E7A-A5DC-87A8857A1959}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4AA7DCC3-3785-4E7A-A5DC-87A8857A1959}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -67,10 +74,13 @@ Global
 		{6D038097-F258-4913-B1ED-1957E22BC1D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D038097-F258-4913-B1ED-1957E22BC1D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D038097-F258-4913-B1ED-1957E22BC1D7}.Release|Any CPU.Build.0 = Release|Any CPU
+<<<<<<< Updated upstream
 		{B16FBCB7-8E66-4DAE-987A-616A9F490DFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B16FBCB7-8E66-4DAE-987A-616A9F490DFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B16FBCB7-8E66-4DAE-987A-616A9F490DFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B16FBCB7-8E66-4DAE-987A-616A9F490DFD}.Release|Any CPU.Build.0 = Release|Any CPU
+=======
+>>>>>>> Stashed changes
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

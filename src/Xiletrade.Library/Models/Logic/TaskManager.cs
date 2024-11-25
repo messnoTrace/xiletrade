@@ -81,13 +81,14 @@ internal sealed class TaskManager
                 StringBuilder sbItemText = new(itemText);
                 // some "\r" are missing while copying directly from the game, not from website copy
                 sbItemText.Replace(Strings.CRLF, Strings.LF).Replace(Strings.LF, Strings.CRLF).Replace("()", string.Empty);
-                string[] clipData = sbItemText.ToString().Trim().Split(new string[] { Strings.ItemInfoDelimiter }, StringSplitOptions.None);
+                string[] clipData = sbItemText.ToString().Trim().Split(new string[] { Strings.ItemInfoDelimiterCRLF }, StringSplitOptions.None);
 
                 bool isPoeItem = clipData.Length > 1 &&
                 clipData[0].StartsWith(Resources.Resources.General126_ItemClassPrefix, StringComparison.Ordinal);
 
-                if (isPoeItem)
-                {
+                //这里我测试的时候，StartWith 校验为false，
+               // if (isPoeItem)
+                //{
                     ClipboardText = itemText;
                     if (clipData[^1].Contains("~b/o", StringComparison.Ordinal)
                     || clipData[^1].Contains("~price", StringComparison.Ordinal))
@@ -107,7 +108,7 @@ internal sealed class TaskManager
                         UpdateItemPrices(Vm.Logic.GetItemFromViewModel(), 0);
                         _serviceProvider.GetRequiredService<INavigationService>().ShowMainView();
                     }
-                }
+              //  }
             }
             catch (OperationCanceledException)
             {

@@ -16,6 +16,9 @@ public sealed class StartViewModel : BaseViewModel
     public AsyncObservableCollection<string> Language { get => language; set => SetProperty(ref language, value); }
     public int LanguageIndex { get => languageIndex; set => SetProperty(ref languageIndex, value); }
 
+
+    public string CookieStr { get => cookieStr; set => SetProperty(ref cookieStr, value); }
+
     //command
     private readonly DelegateCommand closeStart;
     public ICommand CloseStart => closeStart;
@@ -24,9 +27,8 @@ public sealed class StartViewModel : BaseViewModel
     private ConfigData Config { get; set; }
     private string ConfigBackup { get; set; }
 
-    public string CookieStr;
 
-
+    private string cookieStr;
     public StartViewModel()
     {
         closeStart = new(OnCloseStart, CanCloseStart);
@@ -53,7 +55,7 @@ public sealed class StartViewModel : BaseViewModel
         System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.InstalledUICulture;
         TranslationViewModel.Instance.CurrentCulture = System.Globalization.CultureInfo.InstalledUICulture;
 
-        CookieStr = Config.Options.TencentCookie;
+        cookieStr = Config.Options.TencentCookie;
 
     }
 

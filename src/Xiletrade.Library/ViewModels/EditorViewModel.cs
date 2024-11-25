@@ -1,9 +1,13 @@
-﻿using System.Linq;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Input;
 using Xiletrade.Library.Models.Collections;
 using Xiletrade.Library.Models.Serializable;
 using Xiletrade.Library.Services;
+using Xiletrade.Library.Services.Interface;
 using Xiletrade.Library.Shared;
 using Xiletrade.Library.ViewModels.Command;
 
@@ -11,6 +15,7 @@ namespace Xiletrade.Library.ViewModels;
 
 public sealed class EditorViewModel : BaseViewModel
 {
+    private static IServiceProvider _serviceProvider;
     private AsyncObservableCollection<ConfigMods> dangerousMods = new();
     private AsyncObservableCollection<ConfigMods> rareMods = new();
     private AsyncObservableCollection<ModOption> parser = new();
@@ -19,9 +24,11 @@ public sealed class EditorViewModel : BaseViewModel
     private string parserlocation;
     private string filterlocation;
     private string searchField;
+    private string queryItemText;
     private readonly DelegateCommand saveChanges;
     private readonly DelegateCommand initVm;
     private readonly DelegateCommand searchFilter;
+    private readonly DelegateCommand queryItem;
 
     public AsyncObservableCollection<ConfigMods> DangerousMods { get => dangerousMods; set => SetProperty(ref dangerousMods, value); }
     public AsyncObservableCollection<ConfigMods> RareMods { get => rareMods; set => SetProperty(ref rareMods, value); }
@@ -31,15 +38,23 @@ public sealed class EditorViewModel : BaseViewModel
     public string ParserLocation { get => parserlocation; set => SetProperty(ref parserlocation, value); }
     public string Filterlocation { get => filterlocation; set => SetProperty(ref filterlocation, value); }
     public string SearchField { get => searchField; set => SetProperty(ref searchField, value); }
+
+    public string QueryItemText { get => queryItemText;set=>SetProperty(ref queryItemText, value); }
+
+
     public ICommand SaveChanges => saveChanges;
     public ICommand InitVm => initVm;
     public ICommand SearchFilter => searchFilter;
 
-    public EditorViewModel()
+    public ICommand QueryItem => queryItem;
+
+    public EditorViewModel(IServiceProvider serviceProvider)
     {
+        _serviceProvider = serviceProvider;
         saveChanges = new(OnSaveChanges, CanSaveChanges);
         initVm = new(OnInitVm, CanInitVm);
         searchFilter = new(OnSearchFilter, CanSearchFilter);
+        queryItem = new(OnQueryItem,CanQueryItem);
 
         string dataPath = System.IO.Path.GetFullPath("Data\\");
         StringBuilder sb = new(dataPath);
@@ -154,6 +169,54 @@ public sealed class EditorViewModel : BaseViewModel
                     }
                 }
             }
+        }
+    }
+
+
+    private bool CanQueryItem(object commadParameter) {
+        return true;
+
+    }
+
+    private void OnQueryItem(object commandParameter) {
+
+        if (string.IsNullOrEmpty(QueryItemText)) {
+
+            DataManager.showTest("物品信息为空");
+            return;
+        }
+        var vm = _serviceProvider.GetRequiredService<MainViewModel>();
+        if (vm.Logic.Task.Price.CoolDown.IsEnabled)
+        {
+            _serviceProvider.GetRequiredService<INavigationService>().ShowMainView();
+            return;
+        }
+        vm.Logic.Task.HandlePriceCheckSpam();
+
+        try
+        {
+
+            ;
+            string clipText = Encoding.UTF8.GetString(Convert.FromBase64String(QueryItemText));
+            string clipTextAdvanced = clipText;
+            var sub = clipText[..clipText.IndexOf(Strings.ItemInfoDelimiterCRLF)];
+            clipText = sub + clipTextAdvanced.Remove(0, clipTextAdvanced.IndexOf(Strings.ItemInfoDelimiterCRLF));
+            vm.Logic.Task.UpdateMainViewModel(clipText, true);
+     
+        }
+        catch (COMException ex) // for now : do not re-throw exception
+        {
+            if (ex.Message.Contains("0x800401D0", StringComparison.Ordinal)) // CLIPBRD_E_CANT_OPEN 
+            {
+                //Shared.Util.Helper.Debug.Trace("Can not access clipboard : " + ex.Message);
+                return;
+            }
+            //Shared.Util.Helper.Debug.Trace("COMException catched : " + ex.Message);
+        }
+        catch (Exception ex) // do not re-throw exception
+        {
+            DataManager.showTest(ex.Message);
+            //Shared.Util.Helper.Debug.Trace("Exception while parsing data : " + ex.Message);
         }
     }
 }
