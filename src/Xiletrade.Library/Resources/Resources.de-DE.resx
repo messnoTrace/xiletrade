@@ -597,6 +597,25 @@ in Sekunden vor dem Abbrechen.</value>
     <value>Alle von Xiletrade verwendeten Filter werden beim Start automatisch aktualisiert 
 (aus dem Github-Repository und der offiziellen GGG-Website).</value>
   </data>
+  <data name="Config156_checkCtrlWheel" xml:space="preserve">
+    <value>Sendet einen linken Mausklick, wenn das Mausrad ausgelöst wird, während die STRG-Taste gedrückt gehalten wird.
+Funktioniert nur, wenn das POE-Spielfenster aktiv ist.</value>
+  </data>
+  <data name="Config157_lbRegex" xml:space="preserve">
+    <value>Regex-Manager</value>
+  </data>
+  <data name="Config158_lbRegexTip" xml:space="preserve">
+    <value>Zeigt das Fenster des Xiletrade-Regex-Managers an.</value>
+  </data>
+  <data name="Config159_cbGameConfigTip" xml:space="preserve">
+    <value>Wählen Sie Ihre Spielversion.</value>
+  </data>
+  <data name="Config160_lbBindMouse" xml:space="preserve">
+    <value>STRG + Mausrad:</value>
+  </data>
+  <data name="Config161_checkLeftClick" xml:space="preserve">
+    <value>An Linksklick binden</value>
+  </data>
   <data name="General001_Anomalous" xml:space="preserve">
     <value>anormal</value>
   </data>

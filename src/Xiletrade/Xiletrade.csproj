@@ -7,9 +7,9 @@
     <Nullable>disable</Nullable>
     <Copyright>Copyright © 2024 maxensas</Copyright>
     <AssemblyTitle>Xiletrade WPF User Interface</AssemblyTitle>
-    <Version>1.8.11</Version>
-    <AssemblyVersion>1.8.11.0</AssemblyVersion>
-    <FileVersion>1.8.11.0</FileVersion>
+    <Version>1.9.1</Version>
+    <AssemblyVersion>1.9.1.0</AssemblyVersion>
+    <FileVersion>1.9.1.0</FileVersion>
     <PackageProjectUrl>https://github.com/maxensas/xiletrade</PackageProjectUrl>
     <PackageReleaseNotes>https://github.com/maxensas/xiletrade/releases</PackageReleaseNotes>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
@@ -19,18 +19,12 @@
     <Company>Toolcaps</Company>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationIcon>Assets/AppIcon.ico</ApplicationIcon>
-    <!--
-    <PublishProtocol>FileSystem</PublishProtocol>
-    -->
-    <!--
+    <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
-    <PublishTrimmed>true</PublishTrimmed>
-    <TrimMode>link</TrimMode>
-    <ILLinkWarningLevel>4</ILLinkWarningLevel>
-    
-    .NET6 :
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-    -->
+    <PublishProtocol>FileSystem</PublishProtocol>
+    <TrimMode>link</TrimMode>
+    <!-- <PublishTrimmed>true</PublishTrimmed> --> <!-- WinForms not supported -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -101,6 +95,7 @@
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
     <PackageReference Include="Notification.Wpf" Version="8.0.0" />
     <PackageReference Include="System.Private.Uri" Version="4.3.2" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />

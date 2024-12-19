@@ -7,10 +7,11 @@ using System.Text;
 
 try
 {
+    bool isPoe2 = false;
     string inputGgpk = string.Empty;
     bool exportCsv = false;
     bool exportDat = false;
-
+    
     Assembly a = typeof(Program).Assembly;
 
     Console.WriteLine($"Launching Xiletrade JSON generator v{a.GetName().Version?.ToString()} ..");
@@ -40,9 +41,19 @@ try
     catch(Exception) 
     { 
     }
-
+    
     Console.WriteLine("This program will create small JSON files consumed by Xiletrade.");
-    foreach (var path in Strings.PathGgpk) // look if we can find without asking.
+    Console.WriteLine();
+    Console.Write("Do you want to export POE 2 files ? ");
+
+    if (Console.ReadLine()!.ToLower() is "yes" or "y")
+    {
+        isPoe2 = true;
+    }
+
+    GameStrings game = new(isPoe2);
+    
+    foreach (var path in game.PathGgpk) // look if we can find without asking.
     {
         if (File.Exists(path))
         {
@@ -51,7 +62,7 @@ try
         }
     }
 
-    if (inputGgpk.Length == 0)
+    if (inputGgpk.Length is 0)
     {
         Console.Write("Please specify a path for 'Content.ggpk' : ");
         string path = Console.ReadLine()!;
@@ -74,11 +85,12 @@ try
 
     Console.WriteLine();
     Console.WriteLine("[Settings]");
+    Console.WriteLine("POE version       : " + game.GetVersion());
     Console.WriteLine("GGPK path         : " + inputGgpk);
-    Console.WriteLine("DAT Schemas used  : " + Path.GetFullPath("DatDefinitions.json"));
-    Console.WriteLine("DAT64 targets     : " + string.Join(" + ", Strings.DatNames));
+    Console.WriteLine("DAT Schemas used  : " + Path.GetFullPath(game.GetDefinition()));
+    Console.WriteLine("DAT64 targets     : " + string.Join(" + ", game.Names.Keys));
     Console.WriteLine("Output directory  : " + outputDir);
-    Console.WriteLine("Output JSON files : " + string.Join(" + ", Strings.JsonNames));
+    Console.WriteLine("Output JSON files : " + string.Join(" + ", game.Names.Values));
 
     Console.WriteLine();
 
@@ -98,8 +110,40 @@ try
     int files = 0;
     Console.WriteLine();
     Console.WriteLine("Reading ggpk file . . .");
-    var ggpk = new BundledGGPK(inputGgpk); 
-    bool tencentGgpk = ggpk.Index.TryFindNode("data/" + Strings.TencentLang[1].Key, out var tencentNode);
+
+    BundledGGPK? ggpk = null;
+    LibBundle3.Index? index = null;
+
+    var failed = await Task.Run(() => {
+        ggpk = new(inputGgpk, false); 
+        index = ggpk.Index;
+        return index.ParsePaths();
+    });
+
+    if (ggpk is null || index is null)
+    {
+        Console.WriteLine($"Errors {failed} : GGPK or Index is null !");
+        Console.WriteLine("Ending program . . .");
+        return;
+    }
+    
+    List<LibBundle3.Records.FileRecord> lFiles = new();
+    foreach (var bundle in index.Bundles.ToArray())
+    {
+        foreach (var file in bundle.Files)
+        {
+            if (file.Path is null)
+            {
+                break;
+            }
+            if (file.Path.StartsWith("data/"))
+            {
+                lFiles.Add(file);
+            }
+        }
+    }
+
+    bool tencentGgpk = lFiles.Any(x => x.Path.StartsWith("data/" + Strings.TencentLang[1].Key));
     var langs = tencentGgpk ? Strings.TencentLang : Strings.GlobalLang;
 
     Console.WriteLine("Exporting files . . .");
@@ -107,20 +151,21 @@ try
     {
         Console.WriteLine();
         Console.WriteLine("Language selected : " + lang.Key);
-        foreach (var datName in Strings.DatNames)
+        foreach (var datName in game.Names.Keys)
         {
-            string dat = datName + ".dat64";
+            string dat = datName + game.GetDatExtension();
             string langDir = lang.Key is "english" ? string.Empty : lang.Key + "/";
             string datDir = "data/" + langDir + dat;
 
-            ggpk.Index.TryFindNode(datDir, out var node);
-            if (node is null)
+            var fileRecord = lFiles.Where(x => x.Path.Contains(datDir)).FirstOrDefault();
+            if (fileRecord is null)
             {
                 Console.WriteLine("Not found in GGPK: " + datDir);
                 Console.WriteLine("Skipping file . . .");
                 Console.WriteLine();
                 continue;
             }
+            FileLib file = new(fileRecord, dat);
 
             string jsonPath = outputDir + "Lang\\";
             if (!Directory.Exists(jsonPath))
@@ -147,29 +192,31 @@ try
                 }
 
                 var filePath = datPath + dat;
-                //ggpk.Index.Extract(node, filePath);
-                LibBundle3.Index.Extract(node, filePath);
+
+                LibBundle3.Index.Extract(file, datPath);
                 Console.WriteLine("DAT64 created : " + filePath.Replace(outputDir, string.Empty));
 
                 files++;
             }
 
-            if (node is LibBundle3.Nodes.IFileNode fn)
+            if (file is LibBundle3.Nodes.IFileNode fn)
             {
                 var data = fn.Record.Read().ToArray();
                 DatContainer dc;
-                try // to handle DatDefinitions errors mainly
+
+                try // to handle DatDefinitions errors
                 {
-                    dc = new DatContainer(data, dat);
+                    dc = new DatContainer(fileData: data, fileName: dat, poe2: isPoe2);
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine($"[{e.Source} error] {e.Message}"); 
                     continue;
                 }
+
                 
                 StringBuilder sbCsv = new(dc.ToCsv());
-                if (datName == Strings.Mods) // bugfixes
+                if (datName == game.Mods) // bugfixes
                 {
                     if (lang.Key is "Japanese")
                     {
@@ -201,7 +248,7 @@ try
                     files++;
                 }
 
-                var jsonFilePath = Util.CreateJson(sbCsv.ToString(), datName, jsonPath, lang.Key);
+                var jsonFilePath = Util.CreateJson(game, sbCsv.ToString(), datName, jsonPath, lang.Key);
                 if (jsonFilePath?.Length > 0)
                 {
                     Console.WriteLine("JSON created  : " + dataDirectory + jsonFilePath.Replace(outputDir, string.Empty));

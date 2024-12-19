@@ -5,27 +5,21 @@ using System.Text;
 using Xiletrade.Library.Models.Collections;
 using Xiletrade.Library.Models.Serializable;
 using Xiletrade.Library.Shared;
-using Xiletrade.Library.ViewModels;
-using System.Globalization;
+using Xiletrade.Library.ViewModels.Main;
 using System.Text.RegularExpressions;
 using Xiletrade.Library.Services;
-using System.Collections.Specialized;
 
 namespace Xiletrade.Library.Models.Logic;
 
-/// <summary>Abstract helper class containing logic used to update modline viewmodels.</summary>
+/// <summary>Abstract helper class containing the logic used to generate a populated collection of ModLineViewModel.</summary>
 internal abstract class ModLineHelper // TO REFACTOR
 {
-    // ugly metamorph
-    private static StringDictionary metamorphMods = new();
-    internal StringDictionary MetamorphMods { get { return metamorphMods; } set { metamorphMods = value; } }
-
     // internal static
-    internal static AsyncObservableCollection<ModLineViewModel> GetListMods(string[] clipData, ItemFlag itemIs, string itemName, string itemType, string itemClass, int idLang, out TotalStats totalStats, out Dictionary<string, string> lOptions) // TO REFACTOR
+    internal static AsyncObservableCollection<ModLineViewModel> GetListMods(string[] clipData, ItemFlag itemIs, string itemName, string itemType, string itemClass, int idLang, out TotalStats totalStats, out Dictionary<string, string> listOptions) // TO REFACTOR
     {
         AsyncObservableCollection<ModLineViewModel> lMods = new();
         totalStats = new();
-        lOptions = GetNewListOption(); // itemType, itemIs.Gem
+        listOptions = GetNewListOption(); // itemType, itemIs.Gem
 
         if (!itemIs.ShowDetail || itemIs.Gem || itemIs.SanctumResearch || itemIs.AllflameEmber || itemIs.Corpses)
         {
@@ -40,7 +34,7 @@ internal abstract class ModLineHelper // TO REFACTOR
 
                 if (itemIs.SanctumResearch && i == clipData.Length - 1) // at the last loop
                 {
-                    string[] sanctumMods = [.. GetSanctumMods(lOptions)];
+                    string[] sanctumMods = [.. GetSanctumMods(listOptions)];
 
                     if (sanctumMods.Length > 0)
                     {
@@ -49,7 +43,7 @@ internal abstract class ModLineHelper // TO REFACTOR
                     }
                 }
 
-                var lSubMods = GetModsFromData(data, itemIs, itemName, itemType, itemClass, idLang, totalStats, lOptions);
+                var lSubMods = GetModsFromData(data, itemIs, itemName, itemType, itemClass, idLang, totalStats, listOptions);
                 foreach (var submod in lSubMods)
                 {
                     lMods.Add(submod);
@@ -129,14 +123,14 @@ internal abstract class ModLineHelper // TO REFACTOR
                     }
 
                     inputData = ParseUnscalableValue(inputData, out bool unscalableValue);
-                    inputData = Modifier.Parse(inputData, idLang, itemName, itemIs.Jewel, itemIs.Chronicle, itemIs.ArmourPiece, itemIs.Weapon, itemIs.Stave, itemIs.Shield, modDesc.Name, out bool negativeValue);
+                    inputData = Modifier.Parse(inputData, idLang, itemName, itemIs.Chronicle, itemIs.ArmourPiece, itemIs.Weapon, itemIs.Stave, itemIs.Shield, modDesc.Name, out bool negativeValue);
                     if (negativeValue)
                     {
-                        if (Modifier.IsNotEmpty(tierValMin)) tierValMin = -tierValMin;
-                        if (Modifier.IsNotEmpty(tierValMax)) tierValMax = -tierValMax;
+                        if (tierValMin.IsNotEmpty()) tierValMin = -tierValMin;
+                        if (tierValMax.IsNotEmpty()) tierValMax = -tierValMax;
                     }
 
-                    if (itemIs.Metamorph || inputData.StartsWith(Resources.Resources.General098_DeliriumReward, StringComparison.Ordinal))
+                    if (inputData.StartsWith(Resources.Resources.General098_DeliriumReward, StringComparison.Ordinal))
                     {
                         inputData += " (×#)";
                     }
@@ -145,7 +139,7 @@ internal abstract class ModLineHelper // TO REFACTOR
 
                     if (modFilter is not null)
                     {
-                        ModLineViewModel mod = GetModLineViewModel(modFilter, listAffix, itemIs, affix, modDesc, inputData, unparsedData, unscalableValue, tierValMin, tierValMax, min, max, idLang);
+                        ModLineViewModel mod = new(modFilter, listAffix, itemIs, affix, modDesc, inputData, unparsedData, unscalableValue, tierValMin, tierValMax, min, max, idLang);
 
                         if (!itemIs.Unique)
                         {
@@ -154,12 +148,12 @@ internal abstract class ModLineHelper // TO REFACTOR
 
                         if (modFilter.ID.Contains(Strings.Stat.IncAs, StringComparison.Ordinal) && mod.ItemFilter.Min > 0 && mod.ItemFilter.Min < 999)
                         {
-                            double val = Common.StrToDouble(lOptions[Strings.Stat.IncAs]);
+                            double val = lOptions[Strings.Stat.IncAs].ToDoubleDefault();
                             lOptions[Strings.Stat.IncAs] = (val + mod.ItemFilter.Min).ToString();
                         }
                         else if (modFilter.ID.Contains(Strings.Stat.IncPhys, StringComparison.Ordinal) && mod.ItemFilter.Min > 0 && mod.ItemFilter.Min < 9999)
                         {
-                            double val = Common.StrToDouble(lOptions[Strings.Stat.IncPhys]);
+                            double val = lOptions[Strings.Stat.IncPhys].ToDoubleDefault();
                             lOptions[Strings.Stat.IncPhys] = (val + mod.ItemFilter.Min).ToString();
                         }
 
@@ -169,339 +163,6 @@ internal abstract class ModLineHelper // TO REFACTOR
             }
         }
         return lMods;
-    }
-
-    private static ModLineViewModel GetModLineViewModel(FilterResultEntrie modFilter, AsyncObservableCollection<AffixFilterEntrie> listAffix, ItemFlag itemIs, AffixFlag affix, ModDescription modDesc, string data, string unparsedData, bool unscalableValue, double tierValMin, double tierValMax, double min, double max, int idLang)
-    {
-        ModLineViewModel mod = new()
-        {
-            Affix = listAffix,
-            ItemFilter = new()
-            {
-                Id = modFilter.ID, // filter.Type
-                Text = modFilter.Text,
-                Option = Modifier.EMPTYFIELD,
-                Max = max,
-                Min = min,
-                Disabled = true
-            }
-        };
-
-        if (modFilter.Option.Options != null) // retrieve options and select option found
-        {
-            int selId = -1;
-            IEnumerable<FilterResultOptions> listOpt = modFilter.Option.Options.OrderBy(x => x.Text);
-            foreach (FilterResultOptions opt in listOpt)
-            {
-                string optionText = Modifier.ReduceOptionText(opt.Text);
-                mod.Option.Add(optionText); // fire selection changed
-                _ = int.TryParse(opt.ID.ToString(), out int idInt);
-                mod.OptionID.Add(idInt); // fire selection changed
-
-                string[] textLine = opt.Text.Split(Strings.LF);
-                for (int l = 0; l < textLine.Length; l++)
-                {
-                    if (data.ToLowerInvariant().Contains(textLine[l].ToLowerInvariant(), StringComparison.Ordinal))
-                    {
-                        mod.ItemFilter.Option = idInt;
-                        selId = mod.Option.Count - 1;
-                        break;
-                    }
-                }
-                if (DataManager.Config.Options.Language is 8 or 9)
-                {
-                    if (unparsedData is "该区域被塑界者影响" or "该区域被裂界者影响")
-                    {
-                        if (unparsedData.Contains(opt.Text, StringComparison.Ordinal))
-                        {
-                            mod.ItemFilter.Option = idInt;
-                            selId = mod.Option.Count - 1;
-                        }
-                    }
-                }
-            }
-            if (selId > -1)
-            {
-                mod.OptionVisible = true;
-                mod.OptionIndex = selId;
-                mod.ItemFilter.Min = mod.ItemFilter.Max = Modifier.EMPTYFIELD;
-            }
-            else if (itemIs.Chronicle)
-            {
-                mod.OptionVisible = true;
-                mod.OptionIndex = 1;
-                mod.ItemFilter.Min = mod.ItemFilter.Max = Modifier.EMPTYFIELD;
-            }
-        }
-
-        SelectAffix(mod, affix, itemIs);
-
-        mod.Mod = modFilter.Text.Replace(Strings.LF, " ");
-        mod.ModTooltip = modFilter.Text;
-
-        if (modDesc.Tags.Length > 0)
-        {
-            string[] tags = modDesc.Tags.Split(',', StringSplitOptions.TrimEntries);
-            foreach (string t in tags)
-            {
-                mod.TagTip.Add(new(t));
-            }
-            mod.TagVisible = true;
-        }
-
-        if (itemIs.Unique)
-        {
-            mod.AffixEnable = false;
-        }
-
-        if (Modifier.IsNotEmpty(mod.ItemFilter.Min) && Modifier.IsNotEmpty(mod.ItemFilter.Max))
-        {
-            //filter.Text.cou
-            char[] seek = modFilter.Text.ToCharArray();
-            int dieze = 0;
-            for (int h = 0; h < seek.Length; h++)
-            {
-                if (seek[h] == '#')
-                {
-                    dieze++;
-                }
-            }
-            if (dieze == 2) // 2 '#'
-            {
-                mod.ItemFilter.Min += mod.ItemFilter.Max;
-                mod.ItemFilter.Min = Math.Truncate(mod.ItemFilter.Min / 2 * 10 / 10);
-                mod.ItemFilter.Max = Modifier.EMPTYFIELD;
-            }
-        }
-        else if (Modifier.IsNotEmpty(mod.ItemFilter.Min) || Modifier.IsNotEmpty(mod.ItemFilter.Max))
-        {
-            string[] split = modFilter.ID.Split('.');
-            bool defMaxPosition = split.Length == 2 && Strings.Stat.dicDefaultPosition.ContainsKey(split[1]);
-            if (defMaxPosition && mod.ItemFilter.Min > 0 && Modifier.IsEmpty(mod.ItemFilter.Max)) // || (!defMaxPosition && min < 0 && max == 99999)
-            {
-                mod.ItemFilter.Max = mod.ItemFilter.Min;
-                mod.ItemFilter.Min = Modifier.EMPTYFIELD;
-            }
-        }
-
-        if (modDesc.Quality.Length > 0)
-        {
-            //MatchCollection matchOld = Regex.Matches(modDesc.Quality, @"[-]?[0-9]+\.[0-9]+|[-]?[0-9]+");
-            MatchCollection match = RegexUtil.DecimalNoPlusPattern().Matches(modDesc.Quality);
-            if (match.Count > 0)
-            {
-                _ = int.TryParse(match[0].Value, out int quality);
-                if (quality > 0)
-                {
-                    if (Modifier.IsNotEmpty(mod.ItemFilter.Min))
-                    {
-                        mod.ItemFilter.Min += mod.ItemFilter.Min * quality / 100;
-                        //min = Math.Round(min, 0);
-                        if (mod.ItemFilter.Min > 10 ||
-                            modDesc.Tags == Resources.Resources.General029_Gem)
-                        {
-                            mod.ItemFilter.Min = Math.Truncate(mod.ItemFilter.Min);
-                        }
-                    }
-                    else if (Modifier.IsNotEmpty(mod.ItemFilter.Max))
-                    {
-                        mod.ItemFilter.Max += mod.ItemFilter.Max * quality / 100;
-                        //max = Math.Round(max, 0);
-                        if (mod.ItemFilter.Max > 10)
-                        {
-                            mod.ItemFilter.Max = Math.Truncate(mod.ItemFilter.Max);
-                        }
-                    }
-                }
-            }
-        }
-        string specifier = "G";
-        mod.Current = Modifier.IsEmpty(mod.ItemFilter.Min) ? string.Empty : mod.ItemFilter.Min.ToString(specifier, CultureInfo.InvariantCulture);
-        if (mod.Current.Length == 0)
-        {
-            mod.Current = Modifier.IsEmpty(mod.ItemFilter.Max) ? string.Empty : mod.ItemFilter.Max.ToString(specifier, CultureInfo.InvariantCulture);
-        }
-
-        bool isImp = modDesc.Kind == Resources.Resources.General073_ModifierImplicit;
-        bool isCor = modDesc.Kind == Resources.Resources.General074_ModifierCorrupt;
-        bool isPre = modDesc.Kind == Resources.Resources.General075_ModifierPrefix;
-        bool isPreCraft = modDesc.Kind == Resources.Resources.General076_ModifierPrefixCraft;
-        bool isSuf = modDesc.Kind == Resources.Resources.General077_ModifierSuffix;
-        bool isSufCraft = modDesc.Kind == Resources.Resources.General078_ModifierSuffixCraft;
-        bool isUnique = modDesc.Kind == Resources.Resources.General079_ModifierUnique;
-
-        string prefixLetter = (isPreCraft || isSufCraft) && modDesc.Tier > -1 ? Strings.TierKind.EnchantAndCraft
-            : isImp || isCor ? Strings.TierKind.Implicit
-            : isPre || isPreCraft ? Strings.TierKind.Prefix
-            : isSuf || isSufCraft ? Strings.TierKind.Suffix
-            : isUnique ? Strings.TierKind.Unique
-            : string.Empty;
-        mod.TierKind = prefixLetter;
-
-        if (prefixLetter.Length > 0)
-        {
-            mod.Tier = prefixLetter + (modDesc.Tier > -1 ? modDesc.Tier : string.Empty);
-            //List<SolidColorBrush> listTips = new
-            AsyncObservableCollection<ToolTipItem> dicTip = new();
-            //mod.TierTag = "null";
-            if (Modifier.IsNotEmpty(tierValMin) && Modifier.IsNotEmpty(tierValMax))
-            {
-                string tValmin = tierValMin.ToString(specifier, CultureInfo.InvariantCulture);
-                string tValmax = tierValMax.ToString(specifier, CultureInfo.InvariantCulture);
-                string tip = tValmin == tValmax ? tValmin : tValmin + "-" + tValmax;
-                dicTip.Add(new(tip));
-                if (modDesc.Quality.Length > 0)
-                {
-                    dicTip.Add(new("(" + modDesc.Quality + ")", "Suffix"));
-                }
-
-                string tag = "tier";
-                if (modDesc.Tier >= 0 && modDesc.Tier <= 3) tag += modDesc.Tier;
-                mod.TierTag = tag;
-            }
-            else if (unscalableValue)
-            {
-                dicTip.Add(new(Resources.Resources.General080_UnscalableValue));
-            }
-            else
-            {
-                dicTip.Add(new(Resources.Resources.General081_NoRangeValue));
-            }
-
-            if (modDesc.Name.Length > 0)
-            {
-                dicTip.Add(new(modDesc.Name));
-            }
-
-            if (dicTip.Count > 0) mod.TierTip = dicTip;
-        }
-
-        if (Modifier.IsNotEmpty(mod.ItemFilter.Option))
-        {
-            mod.ItemFilter.Min = mod.ItemFilter.Option;
-            mod.ModVisible = true;
-        }
-        else
-        {
-            string modWithRange = Modifier.ComposeModRange(modFilter.Text, mod.ItemFilter.Min, tierValMin, tierValMax, idLang);
-            mod.ModBis = modWithRange.Replace(Strings.LF, " ");
-            mod.ModBisTooltip = modWithRange;
-            mod.ModBisVisible = true;
-        }
-
-        if (tierValMin < 0 && tierValMax < 0) // temp fix for reduce to increase mods
-        {
-            if (mod.ItemFilter.Min > 0)
-            {
-                mod.ItemFilter.Min = -mod.ItemFilter.Min;
-            }
-            if (Modifier.IsNotEmpty(mod.ItemFilter.Max) && mod.ItemFilter.Max > 0)
-            {
-                mod.ItemFilter.Max = -mod.ItemFilter.Max;
-            }
-        }
-
-        mod.Min = Modifier.IsEmpty(mod.ItemFilter.Min) ? string.Empty
-            : Modifier.IsNotEmpty(tierValMin) && DataManager.Config.Options.AutoSelectMinTierValue && !itemIs.Unique ? tierValMin.ToString(specifier, CultureInfo.InvariantCulture)
-            : mod.ItemFilter.Min.ToString(specifier, CultureInfo.InvariantCulture);
-
-        bool mods = modFilter.ID.Contains(Strings.Stat.PassiveSkill, StringComparison.Ordinal)
-            || modFilter.ID.Contains(Strings.Stat.GrantNothing, StringComparison.Ordinal)
-            || modFilter.ID.Contains(Strings.Stat.UseRemaining, StringComparison.Ordinal)
-            || modFilter.ID.Contains(Strings.Stat.ActionSpeed, StringComparison.Ordinal);
-
-        mod.Max = mods ? mod.Min
-            : Modifier.IsEmpty(mod.ItemFilter.Max) ? string.Empty
-            : mod.ItemFilter.Max.ToString(specifier, CultureInfo.InvariantCulture);
-
-        if (modFilter.ID.Contains(Strings.Stat.TimelessJewel, StringComparison.Ordinal)
-            || modFilter.ID.Contains(Strings.Stat.ImmunityIgnite2, StringComparison.Ordinal)) // disable value
-        {
-            mod.Min = string.Empty;
-        }
-
-        return mod;
-    }
-
-    private static void SelectAffix(ModLineViewModel mod, AffixFlag affix, ItemFlag itemIs)
-    {
-        if (mod.Affix.Count > 0)
-        {
-            mod.AffixIndex = -1;
-            AffixFilterEntrie filterEntrie = mod.Affix[0];
-            string[] id_split = filterEntrie.ID.Split('.');
-            if (id_split.Length == 2 && Strings.Stat.dicPseudo.TryGetValue(id_split[1], out string value)) // Gestion des pseudo
-            {
-                mod.Affix.Add(new AffixFilterEntrie("pseudo." + value, Resources.Resources.General014_Pseudo, false, false));
-            }
-            /*
-            string affixKind = DataManager.Config.Options.AutoSelectPseudo ? Resources.Resources.General014_Pseudo :
-                affix.Enchant ? Resources.Resources.General011_Enchant :
-                affix.Fractured ? Resources.Resources.General016_Fractured :
-                affix.Crafted ? Resources.Resources.General012_Crafted :
-                affix.Scourged ? Resources.Resources.General099_Scourge :
-                itemIs.CapturedBeast ? Resources.Resources.General018_Monster : string.Empty;
-            */
-            void SelectAffixIndex(string affixKind)
-            {
-                for (int a = 0; a < mod.Affix.Count; a++)
-                {
-                    if (mod.Affix[a].Name == affixKind)
-                    {
-                        mod.AffixIndex = a;
-                    }
-                }
-            }
-
-            if (DataManager.Config.Options.AutoSelectPseudo)
-            {
-                SelectAffixIndex(Resources.Resources.General014_Pseudo);
-            }
-            if (mod.AffixIndex == -1 && affix.Enchant)
-            {
-                SelectAffixIndex(Resources.Resources.General011_Enchant);
-            }
-            if (mod.AffixIndex == -1 && affix.Fractured)
-            {
-                SelectAffixIndex(Resources.Resources.General016_Fractured);
-            }
-            if (mod.AffixIndex == -1 && affix.Crafted)
-            {
-                SelectAffixIndex(Resources.Resources.General012_Crafted);
-            }
-            if (mod.AffixIndex == -1 && affix.Scourged)
-            {
-                SelectAffixIndex(Resources.Resources.General099_Scourge);
-            }
-            if (mod.AffixIndex == -1 && itemIs.CapturedBeast)
-            {
-                SelectAffixIndex(Resources.Resources.General018_Monster);
-            }
-
-            if (mod.AffixIndex == -1 && affix.Implicit)
-            {
-                SelectAffixIndex(Resources.Resources.General013_Implicit);
-                if (mod.AffixIndex == -1)
-                {
-                    SelectAffixIndex(Resources.Resources.General017_CorruptImp);
-                }
-            }
-
-            if (mod.AffixIndex == -1)
-            {
-                SelectAffixIndex(Resources.Resources.General015_Explicit);
-            }
-
-            if (mod.AffixIndex == -1)
-            {
-                SelectAffixIndex(Resources.Resources.General016_Fractured);
-            }
-
-            if (mod.AffixIndex == -1 && mod.Affix.Count == 1)
-            {
-                mod.AffixIndex = 0;
-            }
-        }
     }
 
     private static Dictionary<string, string> GetNewListOption() //string itemType, bool is_gem
@@ -799,8 +460,8 @@ internal abstract class ModLineHelper // TO REFACTOR
                     }
                     else
                     {
-                        tierValMin = Modifier.IsEmpty(tierValMin) ? tValMin : (tierValMin + tValMin) / 2;
-                        tierValMax = Modifier.IsEmpty(tierValMax) ? tValMax : (tierValMax + tValMax) / 2;
+                        tierValMin = tierValMin.IsEmpty() ? tValMin : (tierValMin + tValMin) / 2;
+                        tierValMax = tierValMax.IsEmpty() ? tValMax : (tierValMax + tValMax) / 2;
                     }
                 }
                 else
@@ -819,8 +480,8 @@ internal abstract class ModLineHelper // TO REFACTOR
             }
         } while (idx1 != -1 || idx2 != -1);
 
-        if (Modifier.IsNotEmpty(tierValMin)) tierValMin = Math.Truncate(tierValMin);
-        if (Modifier.IsNotEmpty(tierValMax)) tierValMax = Math.Truncate(tierValMax);
+        if (tierValMin.IsNotEmpty()) tierValMin = Math.Truncate(tierValMin);
+        if (tierValMax.IsNotEmpty()) tierValMax = Math.Truncate(tierValMax);
 
         minmax = new(tierValMin, tierValMax);
 
@@ -845,9 +506,8 @@ internal abstract class ModLineHelper // TO REFACTOR
         FilterResultEntrie filter = null;
         listAffix = new();
         min = max = Modifier.EMPTYFIELD;
-        //string inputRegEscapeOld = Regex.Escape(Regex.Replace(input, @"[+-]?[0-9]+\.[0-9]+|[+-]?[0-9]+", "#"));
+
         string inputRegEscape = Regex.Escape(RegexUtil.DecimalPattern().Replace(input, "#"));
-        //string inputRegPatternOld = Regex.Replace(inputRegEscapeOld, @"\\#", @"[+-]?([0-9]+\.[0-9]+|[0-9]+|\#)");
         string inputRegPattern = RegexUtil.DiezePattern().Replace(inputRegEscape, RegexUtil.DecimalPatternDieze);
 
         Regex inputRegex = new("^" + inputRegPattern + "$", RegexOptions.IgnoreCase);
@@ -892,22 +552,17 @@ internal abstract class ModLineHelper // TO REFACTOR
                 {
                     if (!entries.Any())
                     {
-                        //string modRegOld = Regex.Replace(input, @"[+-]?[0-9]+\.[0-9]+|[+-]?[0-9]+", "#");
                         string modReg = RegexUtil.DecimalPattern().Replace(input, "#");
                         entries = filterResult.Entries.Where(x => x.Text.StartsWith(input + Strings.LF, StringComparison.Ordinal) || x.Text.StartsWith(modReg + Strings.LF, StringComparison.Ordinal));
                         if (entries.Count() > 1)
                         {
-                            if (dataIndex + 1 < data.Length)
+                            if ((dataIndex + 1 < data.Length) && data[dataIndex + 1].Length > 0)
                             {
-                                if (data[dataIndex + 1].Length > 0)
+                                string modKind = RegexUtil.DecimalPattern().Replace(data[dataIndex + 1], "#");
+                                var entriesTmp = entries.Where(x => x.Text.Contains(modKind, StringComparison.Ordinal));
+                                if (entriesTmp.Any())
                                 {
-                                    //string modKindOld = Regex.Replace(data[dataIndex + 1], @"[+-]?[0-9]+\.[0-9]+|[+-]?[0-9]+", "#");
-                                    string modKind = RegexUtil.DecimalPattern().Replace(data[dataIndex + 1], "#");
-                                    var entriesTmp = entries.Where(x => x.Text.Contains(modKind, StringComparison.Ordinal));
-                                    if (entriesTmp.Any())
-                                    {
-                                        entries = entriesTmp;
-                                    }
+                                    entries = entriesTmp;
                                 }
                             }
                         }
@@ -916,7 +571,6 @@ internal abstract class ModLineHelper // TO REFACTOR
             }
             if (entries.Any())
             {
-                //MatchCollection matches1Old = Regex.Matches(input, @"[-]?[0-9]+\.[0-9]+|[-]?[0-9]+");
                 MatchCollection matches1 = RegexUtil.DecimalNoPlusPattern().Matches(input);
                 foreach (FilterResultEntrie entrie in entries)
                 {
@@ -927,21 +581,6 @@ internal abstract class ModLineHelper // TO REFACTOR
 
                     if (entries.Count() > 1 && entrie.Part.Length > 0)
                         continue;
-
-                    if (entrie.Type is Strings.monster)
-                    {
-                        if (!metamorphMods.ContainsKey(entrie.Text.Trim()))
-                        {
-                            metamorphMods.Add(entrie.Text.Trim(), "1");
-                        }
-                        else
-                        {
-                            string val = metamorphMods[entrie.Text.Trim()];
-                            int num = int.Parse(val, CultureInfo.InvariantCulture) + 1;
-                            metamorphMods[entrie.Text.Trim()] = num.ToString();
-                            continue;
-                        }
-                    }
 
                     int idxMin = 0, idxMax = 0;
                     bool isMin = false, isMax = false, isBreak = true;
@@ -991,19 +630,18 @@ internal abstract class ModLineHelper // TO REFACTOR
                         if (filter is null)
                         {
                             string[] id_split = entrie.ID.Split('.');
-                            //resistance = id_split.Length == 2 && Restr.lResistance.ContainsKey(id_split[1]);
 
                             filter = entrie;
-                            //MatchCollection matchesOld = Regex.Matches(data[dataIndex], @"[-]?[0-9]+\.[0-9]+|[-]?[0-9]+"); //old matches:input, get values on unparsed mod now.
-                            MatchCollection matches = RegexUtil.DecimalNoPlusPattern().Matches(input); //old matches:data[dataIndex] 
+
+                            MatchCollection matches = RegexUtil.DecimalNoPlusPattern().Matches(input);
 
                             if (itemIs.SanctumRelic) // TO update with other unparsed values not done yet
                             {
                                 isMin = true;
                             }
 
-                            min = isMin && matches.Count > idxMin ? Common.StrToDouble(matches[idxMin].Value, true) : Modifier.EMPTYFIELD;
-                            max = isMax && idxMin < idxMax && matches.Count > idxMax ? Common.StrToDouble(matches[idxMax].Value, true) : Modifier.EMPTYFIELD;
+                            min = isMin && matches.Count > idxMin ? matches[idxMin].Value.ToDoubleEmptyField() : Modifier.EMPTYFIELD;
+                            max = isMax && idxMin < idxMax && matches.Count > idxMax ? matches[idxMax].Value.ToDoubleEmptyField() : Modifier.EMPTYFIELD;
 
                             if (entrie.ID is Strings.Stat.NecroExplicit) // invert
                             {
@@ -1019,43 +657,25 @@ internal abstract class ModLineHelper // TO REFACTOR
                 FilterResultEntrie entrie = null;
                 if (itemIs.Logbook)
                 {
-                    FilterResultEntrie entrieSeek = filterResult.Entries.FirstOrDefault(x => x.ID.Contains(Strings.Stat.LogbookBoss, StringComparison.Ordinal));
-                    if (entrieSeek is not null)
+                    var entrieSeek = filterResult.Entries.FirstOrDefault(x => x.ID.Contains(Strings.Stat.LogbookBoss, StringComparison.Ordinal));
+                    if (entrieSeek is not null && entrieSeek.Option.Options.Length > 0)
                     {
-                        if (entrieSeek.Option.Options.Length > 0)
-                        {
-                            var entrieSeek2 =
+                        var entrieSeek2 =
                                 from opt in entrieSeek.Option.Options
                                 where input.Contains(opt.Text, StringComparison.Ordinal)
                                 select entrieSeek;
-                            if (entrieSeek2.Any())
-                            {
-                                entrie = entrieSeek2.First();
-                            }
-                            /*
-                            foreach (FilterResultOptions opt in entrieSeek.Option.Options)
-                            {
-                                if (input.Contains(opt.Text, StringComparison.Ordinal))
-                                {
-                                    entrie = entrieSeek;
-                                    break;
-                                }
-                            }*/
+                        if (entrieSeek2.Any())
+                        {
+                            entrie = entrieSeek2.First();
                         }
                     }
 
                     entrieSeek = filterResult.Entries.FirstOrDefault(x => x.Text.Contains(input, StringComparison.Ordinal));
-                    if (entrieSeek is not null)
+                    if (entrieSeek is not null && entrieSeek.ID.Contains("logbook", StringComparison.Ordinal))
                     {
-                        if (entrieSeek.ID.Contains("logbook", StringComparison.Ordinal)) //&& !entrieSeek.ID.Contains("faction")
-                        {
-                            entrie = entrieSeek;
-                        }
+                        entrie = entrieSeek;
                     }
                 }
-                /*else if (itemIs.SanctumRelic)
-                {
-                }*/
                 else
                 {
                     List<string> checkList = new();
@@ -1423,8 +1043,8 @@ internal abstract class ModLineHelper // TO REFACTOR
 
     private static void FillTotalStats(TotalStats stat, FilterResultEntrie modFilter, string currentValue, int idLang)
     {
-        string modTextEnglish = modFilter.Text; // ((TextBox)this.FindName("mod" + k)).Text
-        if (idLang != 0) // !StringsTable.Culture[idLang].Equals("en-US")
+        string modTextEnglish = modFilter.Text;
+        if (idLang != 0) // !("en-US")
         {
             var enResult =
                 from result in DataManager.FilterEn.Result
@@ -1438,17 +1058,17 @@ internal abstract class ModLineHelper // TO REFACTOR
         }
 
         double totResist = Modifier.CalculateTotalResist(modTextEnglish, currentValue);
-        if (totResist != 0)
+        if (totResist is not 0)
         {
             stat.Resistance = stat.Resistance > 0 ? stat.Resistance + totResist : totResist;
         }
         double totLife = Modifier.CalculateTotalLife(modTextEnglish, currentValue);
-        if (totLife != 0)
+        if (totLife is not 0)
         {
             stat.Life = stat.Life > 0 ? stat.Life + totLife : totLife;
         }
         double totEs = Modifier.CalculateGlobalEs(modTextEnglish, currentValue);
-        if (totEs != 0)
+        if (totEs is not 0)
         {
             stat.EnergyShield = stat.EnergyShield > 0 ? stat.EnergyShield + totEs : totEs;
         }

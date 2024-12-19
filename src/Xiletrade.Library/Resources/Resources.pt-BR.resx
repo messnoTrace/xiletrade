@@ -597,6 +597,25 @@ em segundos antes de cancelar.</value>
     <value>Atualize automaticamente todos os filtros usados pelo Xiletrade no início
 (do repositório github e do site oficial do GGG)</value>
   </data>
+  <data name="Config156_checkCtrlWheel" xml:space="preserve">
+    <value>Enviará um clique esquerdo do mouse sempre que a roda do mouse for acionada enquanto segura a tecla CTRL.
+Funciona somente quando a janela do jogo POE estiver ativa.</value>
+  </data>
+  <data name="Config157_lbRegex" xml:space="preserve">
+    <value>Gerenciador de regex</value>
+  </data>
+  <data name="Config158_lbRegexTip" xml:space="preserve">
+    <value>Exibir janela do gerenciador de regex Xiletrade.</value>
+  </data>
+  <data name="Config159_cbGameConfigTip" xml:space="preserve">
+    <value>Escolha sua versão do jogo.</value>
+  </data>
+  <data name="Config160_lbBindMouse" xml:space="preserve">
+    <value>CTRL + roda do mouse:</value>
+  </data>
+  <data name="Config161_checkLeftClick" xml:space="preserve">
+    <value>Vincular ao clique esquerdo</value>
+  </data>
   <data name="General001_Anomalous" xml:space="preserve">
     <value>Anômalo</value>
   </data>

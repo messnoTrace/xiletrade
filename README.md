@@ -1,4 +1,4 @@
-# <img src="https://i.imgur.com/dhWQgtY.png" width="30" height="30"> Xiletrade - [Download v1.8.10](https://github.com/maxensas/xiletrade/releases/download/1.8.10/Xiletrade_win-x64.7z)  
+# <img src="https://i.imgur.com/dhWQgtY.png" width="30" height="30"> Xiletrade - [Download v1.9.0](https://github.com/maxensas/xiletrade/releases/download/1.9.0/Xiletrade_win-x64.7z)  
 
 [<img width="20" height="15" src="https://user-images.githubusercontent.com/62154281/104107842-feae5080-52bf-11eb-8e8f-d8827f1f0334.png">](https://github.com/maxensas/xiletrade)
 [<img width="20" height="15" src="https://user-images.githubusercontent.com/62154281/104107838-fd7d2380-52bf-11eb-8d47-f949fd7a3b58.png">](https://github.com/maxensas/xiletrade/blob/master/readme/README.kr.md)
@@ -30,7 +30,9 @@ Instantly get other sales similar to your request and the right price estimate.<
 * Bulk item exchange feature (all currencies) to allow fast market checks and whisper trades through POE.
 * Addons : linked with poe.prices, ninja, wiki and poedb to help pricing items and retrieve more info about related items.
 * Features without automation : Fast TCP logout / Updates / Custom chat messages and more.
+* Regex manager : Allow you to manage your defined list of regular expressions and auto paste selected ones into the highlight bar.
 * Quick access to settings to modify automatic form selections for price checks behaviour.
+* Binding mouse wheel to left click on demand respecting single action rule.
 * Designed to respect rules set by the official trade website in order to avoid abuses (limited data recovery and requests over time).
 
 ## Languages - [sample](https://github.com/maxensas/xiletrade/blob/master/LANGUAGES.md) :

@@ -1,80 +1,57 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Windows.Input;
 using Xiletrade.Library.Models.Collections;
 using Xiletrade.Library.Models.Serializable;
 using Xiletrade.Library.Services;
-using Xiletrade.Library.Services.Interface;
 using Xiletrade.Library.Shared;
-using Xiletrade.Library.ViewModels.Command;
 
 namespace Xiletrade.Library.ViewModels;
 
-public sealed class EditorViewModel : BaseViewModel
+public sealed partial class EditorViewModel : ViewModelBase
 {
-    private static IServiceProvider _serviceProvider;
+    [ObservableProperty]
     private AsyncObservableCollection<ConfigMods> dangerousMods = new();
+
+    [ObservableProperty]
     private AsyncObservableCollection<ConfigMods> rareMods = new();
+
+    [ObservableProperty]
     private AsyncObservableCollection<ModOption> parser = new();
-    private AsyncObservableCollection<ModFilterViewModel> filter = new();
-    private string configlocation;
-    private string parserlocation;
-    private string filterlocation;
+
+    [ObservableProperty]
+    private AsyncObservableCollection<EditorModViewModel> filter = new();
+
+    [ObservableProperty]
+    private string configLocation;
+
+    [ObservableProperty]
+    private string parserLocation;
+
+    [ObservableProperty]
+    private string filterLocation;
+
+    [ObservableProperty]
     private string searchField;
-    private string queryItemText;
-    private readonly DelegateCommand saveChanges;
-    private readonly DelegateCommand initVm;
-    private readonly DelegateCommand searchFilter;
-    private readonly DelegateCommand queryItem;
 
-    public AsyncObservableCollection<ConfigMods> DangerousMods { get => dangerousMods; set => SetProperty(ref dangerousMods, value); }
-    public AsyncObservableCollection<ConfigMods> RareMods { get => rareMods; set => SetProperty(ref rareMods, value); }
-    public AsyncObservableCollection<ModOption> Parser { get => parser; set => SetProperty(ref parser, value); }
-    public AsyncObservableCollection<ModFilterViewModel> Filter { get => filter; set => SetProperty(ref filter, value); }
-    public string Configlocation { get => configlocation; set => SetProperty(ref configlocation, value); }
-    public string ParserLocation { get => parserlocation; set => SetProperty(ref parserlocation, value); }
-    public string Filterlocation { get => filterlocation; set => SetProperty(ref filterlocation, value); }
-    public string SearchField { get => searchField; set => SetProperty(ref searchField, value); }
-
-    public string QueryItemText { get => queryItemText;set=>SetProperty(ref queryItemText, value); }
-
-
-    public ICommand SaveChanges => saveChanges;
-    public ICommand InitVm => initVm;
-    public ICommand SearchFilter => searchFilter;
-
-    public ICommand QueryItem => queryItem;
-
-    public EditorViewModel(IServiceProvider serviceProvider)
+    public EditorViewModel()
     {
-        _serviceProvider = serviceProvider;
-        saveChanges = new(OnSaveChanges, CanSaveChanges);
-        initVm = new(OnInitVm, CanInitVm);
-        searchFilter = new(OnSearchFilter, CanSearchFilter);
-        queryItem = new(OnQueryItem,CanQueryItem);
-
         string dataPath = System.IO.Path.GetFullPath("Data\\");
         StringBuilder sb = new(dataPath);
         sb.Append("Lang\\")
           .Append(Strings.Culture[DataManager.Config.Options.Language])
           .Append("\\");
 
-        Configlocation = dataPath + Strings.File.Config;
+        ConfigLocation = dataPath + Strings.File.Config;
         ParserLocation = sb.ToString() + Strings.File.ParsingRules;
-        Filterlocation = sb.ToString() + Strings.File.Filters;
+        FilterLocation = sb.ToString() + Strings.File.Filters;
 
-        OnInitVm(null);
+        InitVm(null);
     }
 
-    private bool CanSaveChanges(object commandParameter)
-    {
-        return true;
-    }
-
-    private void OnSaveChanges(object commandParameter)
+    [RelayCommand]
+    private void SaveChanges(object commandParameter)
     {
         DataManager.Parser.Mods = Parser.Where(x => x.Replace is "equals" or "contains" && x.Old.Length > 0 && x.New.Length > 0).ToArray();
         string fileToSave = Json.Serialize<ParserData>(DataManager.Parser);
@@ -83,15 +60,11 @@ public sealed class EditorViewModel : BaseViewModel
         DataManager.Config.DangerousMapMods = DangerousMods.Where(x => x.Id.Length > 0 && x.Id.Contains("stat_")).ToArray();
         DataManager.Config.RareItemMods = RareMods.Where(x => x.Id.Length > 0 && x.Id.Contains("stat_")).ToArray();
         fileToSave = Json.Serialize<ConfigData>(DataManager.Config);
-        DataManager.Save_File(fileToSave, Configlocation);
+        DataManager.Save_File(fileToSave, ConfigLocation);
     }
 
-    private bool CanInitVm(object commandParameter)
-    {
-        return true;
-    }
-
-    private void OnInitVm(object commandParameter)
+    [RelayCommand]
+    private void InitVm(object commandParameter)
     {
         Parser.Clear();
         foreach (var modOption in DataManager.Parser.Mods)
@@ -132,91 +105,43 @@ public sealed class EditorViewModel : BaseViewModel
             RareMods.Add(mod);
         }
     }
-    private bool CanSearchFilter(object commandParameter)
-    {
-        return true;
-    }
 
-    private void OnSearchFilter(object commandParameter)
+    [RelayCommand]
+    private void SearchFilter(object commandParameter)
     {
         Filter.Clear();
-        if (SearchField.Length > 0)
+        var search = SearchField.Length > 0;
+        if (!search)
         {
-            var entriesMerge =
+            return;
+        }
+
+        var entriesMerge =
                 from result in DataManager.Filter.Result
                 from Entrie in result.Entries
                 select Entrie;
-            if (entriesMerge.Any())
+        if (entriesMerge.Any())
+        {
+            var entrieMatches =
+                from result in entriesMerge
+                where result.Text.Contains(SearchField, System.StringComparison.Ordinal)
+                select result;
+            if (entrieMatches.Any())
             {
-                var entrieMatches =
-                    from result in entriesMerge
-                    where result.Text.Contains(SearchField, System.StringComparison.Ordinal)
-                    select result;
-                if (entrieMatches.Any())
+                int nb = 0;
+                foreach (FilterResultEntrie match in entrieMatches)
                 {
-                    int nb = 0;
-                    foreach (FilterResultEntrie match in entrieMatches)
+                    EditorModViewModel newEntrie = new()
                     {
-                        ModFilterViewModel newEntrie = new()
-                        {
-                            Num = nb,
-                            Id = match.ID,
-                            Type = match.Type,
-                            Text = match.Text
-                        };
-                        Filter.Add(newEntrie);
-                        nb++;
-                    }
+                        Num = nb,
+                        Id = match.ID,
+                        Type = match.Type,
+                        Text = match.Text
+                    };
+                    Filter.Add(newEntrie);
+                    nb++;
                 }
             }
-        }
-    }
-
-
-    private bool CanQueryItem(object commadParameter) {
-        return true;
-
-    }
-
-    private void OnQueryItem(object commandParameter) {
-
-        if (string.IsNullOrEmpty(QueryItemText)) {
-
-            DataManager.showTest("物品信息为空");
-            return;
-        }
-        var vm = _serviceProvider.GetRequiredService<MainViewModel>();
-        if (vm.Logic.Task.Price.CoolDown.IsEnabled)
-        {
-            _serviceProvider.GetRequiredService<INavigationService>().ShowMainView();
-            return;
-        }
-        vm.Logic.Task.HandlePriceCheckSpam();
-
-        try
-        {
-
-            ;
-            string clipText = Encoding.UTF8.GetString(Convert.FromBase64String(QueryItemText));
-            string clipTextAdvanced = clipText;
-            var sub = clipText[..clipText.IndexOf(Strings.ItemInfoDelimiterCRLF)];
-            clipText = sub + clipTextAdvanced.Remove(0, clipTextAdvanced.IndexOf(Strings.ItemInfoDelimiterCRLF));
-            vm.Logic.Task.UpdateMainViewModel(clipText, true);
-     
-        }
-        catch (COMException ex) // for now : do not re-throw exception
-        {
-            if (ex.Message.Contains("0x800401D0", StringComparison.Ordinal)) // CLIPBRD_E_CANT_OPEN 
-            {
-                //Shared.Util.Helper.Debug.Trace("Can not access clipboard : " + ex.Message);
-                return;
-            }
-            //Shared.Util.Helper.Debug.Trace("COMException catched : " + ex.Message);
-        }
-        catch (Exception ex) // do not re-throw exception
-        {
-            DataManager.showTest(ex.Message);
-            //Shared.Util.Helper.Debug.Trace("Exception while parsing data : " + ex.Message);
         }
     }
 }

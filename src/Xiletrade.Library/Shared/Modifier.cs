@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Xiletrade.Library.Models.Enums;
-using Xiletrade.Library.Models.Serializable;
 using Xiletrade.Library.Services;
 
 namespace Xiletrade.Library.Shared;
@@ -17,20 +16,10 @@ internal static class Modifier
     internal const int NB_MAX_MODS = 30;
     /// <summary>Empty fields will not be added to json</summary>
     internal const int EMPTYFIELD = 99999;
+    /// <summary>Using with Levenshtein parser</summary>
+    internal const int LEVENSHTEIN_DISTANCE_DIVIDER = 6; // maybe go up to 8
 
-    /// <summary>Return true if equal to EMPTYFIELD.</summary>
-    internal static bool IsEmpty(double value)
-    {
-        return value is EMPTYFIELD;
-    }
-
-    /// <summary>Return true if not equal to EMPTYFIELD.</summary>
-    internal static bool IsNotEmpty(double value)
-    {
-        return value is not EMPTYFIELD;
-    }
-
-    internal static string Parse(string mod, int idLang, string itemName, bool is_jewel, bool is_chronicle, bool is_armour_piece, bool is_weapon, bool is_stave, bool is_shield, string affixName, out bool negativeValue)
+    internal static string Parse(string mod, int idLang, string itemName, bool is_chronicle, bool is_armour_piece, bool is_weapon, bool is_stave, bool is_shield, string affixName, out bool negativeValue)
     {
         negativeValue = false;
         MatchCollection match = RegexUtil.DecimalNoPlusPattern().Matches(mod);
@@ -137,8 +126,8 @@ internal static class Modifier
         }
         else
         {
-            // mod is not parsed
-            sb.Append(modKind);
+            // mod is not parsed using ParsingRules but with Fastenshtein
+            sb.Append(ParseWithFastenshtein(modKind));
         }
 
         if (modKind != sb.ToString())
@@ -164,10 +153,10 @@ internal static class Modifier
 
             if (is_chronicle)
             {
-                FilterResultEntrie ExplicitEntry = DataManager.Filter.Result[idxPseudo].Entries.FirstOrDefault(x => x.Text.Contains(mod, StringComparison.Ordinal));
-                if (ExplicitEntry is not null)
+                var filter = DataManager.Filter.Result[idxPseudo].Entries.FirstOrDefault(x => x.Text.Contains(mod, StringComparison.Ordinal));
+                if (filter is not null)
                 {
-                    returnMod = ExplicitEntry.Text;
+                    returnMod = filter.Text;
                 }
                 else
                 {
@@ -178,10 +167,10 @@ internal static class Modifier
                         System.Resources.ResourceManager rm = new(typeof(Resources.Resources));
                         mod = rm.GetString("General068_ApexAtzoatl", cultureEn); // Using english version because GGG didnt translated 'pseudo.pseudo_temple_apex' text filter yet
 
-                        ExplicitEntry = DataManager.Filter.Result[idxPseudo].Entries.FirstOrDefault(x => x.Text.Contains(mod, StringComparison.Ordinal));
-                        if (ExplicitEntry is not null)
+                        filter = DataManager.Filter.Result[idxPseudo].Entries.FirstOrDefault(x => x.Text.Contains(mod, StringComparison.Ordinal));
+                        if (filter is not null)
                         {
-                            returnMod = ExplicitEntry.Text;
+                            returnMod = filter.Text;
                         }
                     }
                 }
@@ -201,7 +190,7 @@ internal static class Modifier
                 if (is_weapon)
                 {
                     bool isBloodlust = DataManager.Words.FirstOrDefault(x => x.NameEn is "Hezmana's Bloodlust").Name == itemName;
-                    if (!isBloodlust) // GGG mistakes again...
+                    if (!isBloodlust)
                     {
                         stats.Add(Strings.Stat.LifeLeech);
                     }
@@ -231,7 +220,6 @@ internal static class Modifier
 
                 if (stats.Count > 0)
                 {
-                    //FilterResultEntrie Entry = null;
                     foreach (string stat in stats)
                     {
                         var resultEntry =
@@ -356,11 +344,8 @@ internal static class Modifier
         if (IsTotalStat(mod, Stat.Life)
             && double.TryParse(currentValue.Replace(".", ","), out double currentVal))
         {
-            if (mod.ToLowerInvariant().Contains("to strength", StringComparison.Ordinal))
-            {
-                return Math.Truncate(currentVal / 2);
-            }
-            return currentVal;
+            var cond = mod.ToLowerInvariant().Contains("to strength", StringComparison.Ordinal);
+            return cond ? Math.Truncate(currentVal / 2) : currentVal;
         }
         return 0;
     }
@@ -400,12 +385,12 @@ internal static class Modifier
             sbMod.Replace(Resources.Resources.General096_AddsTo, "#");
         }
 
-        if (IsNotEmpty(tValMin) && IsNotEmpty(tValMax))
+        if (tValMin.IsNotEmpty() && tValMax.IsNotEmpty())
         {
             string range = "(" + tValMin + "-" + tValMax + ")";
             sbMod.Replace("#", range);
         }
-        else if (IsNotEmpty(min))
+        else if (min.IsNotEmpty())
         {
             sbMod.Replace("#", min.ToString());
         }
@@ -415,11 +400,38 @@ internal static class Modifier
 
     internal static string ReduceOptionText(string text)
     {
-        if (Strings.dicOptionText.TryGetValue(text, out string value))
+        return Strings.dicOptionText.TryGetValue(text, out string value) ? value : text;
+    }
+
+    private static string ParseWithFastenshtein(string str)
+    {
+        int maxDistance = str.Length / LEVENSHTEIN_DISTANCE_DIVIDER;
+        if (maxDistance is 0)
         {
-            return value;
+            maxDistance = 1;
         }
-        return text;
+        var entrySeek =
+            from result in DataManager.Filter.Result
+            from filter in result.Entries
+            select filter.Text;
+        var seek = entrySeek.FirstOrDefault(x => x.Contains(str, StringComparison.Ordinal));
+        if (seek is null)
+        {
+            Fastenshtein.Levenshtein lev = new(str);
+
+            var distance = maxDistance;
+            foreach (var item in entrySeek)
+            {
+                int levDistance = lev.DistanceFrom(item);
+                if (levDistance <= distance)
+                {
+                    str = item;
+                    distance = levDistance - 1;
+                }
+            }
+        }
+
+        return str;
     }
 
     /*

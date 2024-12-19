@@ -51,5 +51,21 @@ namespace Xiletrade.Services
         {
             return _serviceProvider.GetRequiredService<XiletradeService>().ChatKey;
         }
+
+        public void StartMouseWheelCapture()
+        {
+            Library.Shared.Interop.Mouse.Hook.Start();
+        }
+
+        public void StopMouseWheelCapture()
+        {
+            Library.Shared.Interop.Mouse.Hook.Stop();
+        }
+
+        public void CleanPoeSearchBarAndPasteClipboard()
+        {
+            System.Windows.Forms.SendKeys.SendWait("^{F}{DELETE}");
+            PasteClipboard();
+        }
     }
 }

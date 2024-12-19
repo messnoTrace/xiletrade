@@ -596,6 +596,25 @@
     <value>อัปเดตตัวกรองทั้งหมดที่ใช้โดย Xiletrade โดยอัตโนมัติเมื่อเริ่มต้น
 (จากพื้นที่เก็บข้อมูล github และเว็บไซต์อย่างเป็นทางการของ GGG)</value>
   </data>
+  <data name="Config156_checkCtrlWheel" xml:space="preserve">
+    <value>จะส่งการคลิกเมาส์ซ้ายทุกครั้งที่มีการเรียกใช้งานล้อเมาส์ในขณะที่กดปุ่ม CTRL ค้างไว้
+จะทำงานได้เฉพาะเมื่อหน้าต่างเกม POE ทำงานอยู่เท่านั้น</value>
+  </data>
+  <data name="Config157_lbRegex" xml:space="preserve">
+    <value>ตัวจัดการ Regex</value>
+  </data>
+  <data name="Config158_lbRegexTip" xml:space="preserve">
+    <value>แสดงหน้าต่างตัวจัดการ Regex ของ Xiletrade</value>
+  </data>
+  <data name="Config159_cbGameConfigTip" xml:space="preserve">
+    <value>เลือกเวอร์ชันเกมของคุณ</value>
+  </data>
+  <data name="Config160_lbBindMouse" xml:space="preserve">
+    <value>CTRL + ล้อเลื่อนของเมาส์ :</value>
+  </data>
+  <data name="Config161_checkLeftClick" xml:space="preserve">
+    <value>ผูกเข้ากับการคลิกซ้าย</value>
+  </data>
   <data name="General001_Anomalous" xml:space="preserve">
     <value>Anomalous</value>
   </data>

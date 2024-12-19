@@ -4,12 +4,12 @@ using System.Text;
 using System.Threading;
 using System.Net.Http;
 using Xiletrade.Library.Models.Serializable;
-using Xiletrade.Library.ViewModels;
 using Xiletrade.Library.Models.Enums;
 using Xiletrade.Library.Shared;
 using Xiletrade.Library.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Xiletrade.Library.Services.Interface;
+using Xiletrade.Library.ViewModels.Main;
 
 namespace Xiletrade.Library.Models.Logic;
 
@@ -21,7 +21,6 @@ internal sealed class MainPricing
     private static readonly StringListFormat StrFormat = new();
     
     internal PricingWatch Watch { get; private set; } = new();
-    internal PricingDataBuffer Buffer { get; private set; } = new();
     internal PricingCooldown CoolDown { get; private set; }
 
     internal MainPricing(MainViewModel vm, IServiceProvider serviceProvider)
@@ -32,8 +31,6 @@ internal sealed class MainPricing
     }
 
     // internal methods
-
-    // TODO : remake with real json object instead of dirty strings.
     internal void UpdateVmWithApi(List<string>[] entity, string league, string market, int minimumStock, int maxFetch, bool hideSameUser, CancellationToken token)
     {
         string[] result = [string.Empty, string.Empty];
@@ -41,88 +38,46 @@ internal sealed class MainPricing
         string sEntity = null;
         bool exchange = false;
         bool simpleBulk = false;
-        //int totalWantResult = listCount*5;
+
         if (entity[0]?.Count == 1 && entity[1] is null)
         {
             sEntity = entity[0][0];
-
-            urlString = Strings.TradeApi[DataManager.Config.Options.Language];
-            //beginFetch[0] = 0;
+            urlString = Strings.TradeApi;
             for (int i = 0; i < 5; i++)
             {
-                Buffer.StatsFetchDetail[i] = 0;
+                Vm.Result.Data.StatsFetchDetail[i] = 0;
             }
         }
         else if (entity[0]?.Count >= 1 && entity[1]?.Count >= 1)
         {
-            //simpleBulk = entity[0].Count == 1 && entity[1].Count == 1;
-            simpleBulk = Vm.Form.Tab.BulkSelected; //&& !Vm.Form.Tab.ShopSelected
+            simpleBulk = Vm.Form.Tab.BulkSelected;
             if (simpleBulk)
             {
-                Buffer.ExchangeCurrency = [entity[0][0], entity[1][0]];
+                Vm.Result.Data.ExchangeCurrency = [entity[0][0], entity[1][0]];
             }
 
-            StringBuilder sbPay = new(",\"have\":["), sbGet = new(",\"want\":[");
-            bool appended = false;
-            foreach (var str in entity[0])
+            Exchange change = new();
+            change.ExchangeData.Status.Option = market;
+            change.ExchangeData.Minimum = minimumStock;
+            //change.ExchangeData.Collapse = simpleBulk ? "false" : "true"; // Collapse parameter not needed anymore
+            change.Engine = "new";
+            if (entity[0] is not null)
             {
-                if (str.Length > 0)
-                {
-                    if (appended)
-                    {
-                        sbPay.Append(',');
-                    }
-                    sbPay.Append('"').Append(str).Append('"');
-                    appended = true;
-                }
+                change.ExchangeData.Have = [.. entity[0]];
             }
-            sbPay.Append(']');
-
-            appended = false;
-            foreach (var str in entity[1])
+            if (entity[1] is not null)
             {
-                if (str.Length > 0)
-                {
-                    if (appended)
-                    {
-                        sbGet.Append(',');
-                    }
-                    sbGet.Append('"').Append(str).Append('"');
-                    appended = true;
-                }
+                change.ExchangeData.Want = [.. entity[1]];
             }
-            sbGet.Append(']');
 
-            /*
-            if (entity[0][0].Length > 0)
-            {
-                entity[0][0] = ",\"have\":[\"" + entity[0][0] + "\"]";
-            }
-            if (entity[1][0].Length > 0)
-            {
-                entity[1][0] = ",\"want\":[\"" + entity[1][0] + "\"]";
-            }*/
+            sEntity = Json.Serialize<Exchange>(change); 
 
-            //sEentity = "{\"exchange\":{\"status\":{\"option\":\"online\"},\"have\":[\"chaos\"],\"want\":[\"exalted\",\"gcp\"],\"minimum\":1,\"collapse\":true},\"engine\":\"new\"}";
-            //sEentity = "{\"exchange\":{\"status\":{\"option\":\"online\"},\"have\":[\"chaos\"],\"want\":[\"exalted\"],\"minimum\":1,\"collapse\":false},\"engine\":\"new\"}";
-            //sEentity = "{\"query\":{\"status\":{\"option\":\"online\"},\"have\":[\"exalted\"],\"want\":[\"chaos\"]},\"sort\":{\"want\":\"asc\"},\"engine\":\"new\"}";
-            // "engine" : "new"|"legacy"
-            sEntity = string.Format(
-                    "{{\"query\":{{\"status\":{{\"option\":\"{0}\"}}{1}{2}, \"minimum\": {3},\"collapse\": {4}}},\"engine\":\"new\"}}",
-                    market,
-                    sbPay.ToString(),//entity[0][0],
-                    sbGet.ToString(),//entity[1][0],
-                    minimumStock,
-                    simpleBulk ? "false" : "true"
-                );
-            // "{{\"exchange\":{{\"status\":{{\"option\":\"{0}\"}},\"have\":[\"{1}\"],\"want\":[\"{2}\"], \"minimum\": {3}}}}}",
-
-            urlString = Strings.ExchangeApi[DataManager.Config.Options.Language];
+            urlString = Strings.ExchangeApi;
             exchange = true;
-            //beginFetch[1] = 0;
+
             for (int i = 0; i < 5; i++)
             {
-                Buffer.StatsFetchBulk[i] = 0;
+                Vm.Result.Data.StatsFetchBulk[i] = 0;
             }
         }
 
@@ -156,7 +111,7 @@ internal sealed class MainPricing
                         }
                         else
                         {
-                            Buffer.DataToFetchDetail = Json.Deserialize<ResultData>(sResult);
+                            Vm.Result.Data.DataToFetchDetail = Json.Deserialize<ResultData>(sResult);
                             result = FillDetailVm(maxFetch, market, hideSameUser, token);
                         }
 
@@ -211,8 +166,8 @@ internal sealed class MainPricing
             int fetchNbMax;
             ResultData dataToFetch;
             fetchNbMax = 10; // previously 5
-            dataToFetch = Buffer.DataToFetchDetail;
-            beginFetch = Buffer.StatsFetchDetail[0];
+            dataToFetch = Vm.Result.Data.DataToFetchDetail;
+            beginFetch = Vm.Result.Data.StatsFetchDetail[0];
 
             int total = 0, unpriced = 0;
             int resultCount = dataToFetch.Result.Length;
@@ -236,7 +191,7 @@ internal sealed class MainPricing
                         beginFetch++;
                     }
 
-                    string url = Strings.FetchApi[DataManager.Config.Options.Language] + string.Join(",", tmp) + "?query=" + dataToFetch.Id;
+                    string url = Strings.FetchApi + string.Join(",", tmp) + "?query=" + dataToFetch.Id;
 
                     CoolDown.Apply();
                     var service = _serviceProvider.GetRequiredService<NetService>();
@@ -296,7 +251,7 @@ internal sealed class MainPricing
                                     return ["Abort called before the end", "Application (Task) ERROR "];
                                 }
 
-                                tempFetch = Buffer.StatsFetchDetail[1];
+                                tempFetch = Vm.Result.Data.StatsFetchDetail[1];
 
                                 string curShort = ReplaceCurrencyChars(keyName);
                                 string[] age = ageIndex.Split('-');
@@ -305,9 +260,9 @@ internal sealed class MainPricing
                                     : string.Empty;
                                 // need non-async
                                 bool addItem = true;
-                                if (Vm.SameUser && Vm.Result.DetailList.Count >= 1)
+                                if (Vm.Form.SameUser && Vm.Result.DetailList.Count >= 1)
                                 {
-                                    ListItemViewModel lbi = Vm.Result.DetailList[^1]; // liPriceDetail.Items.Count - 1]
+                                    var lbi = Vm.Result.DetailList[^1]; // liPriceDetail.Items.Count - 1]
                                     if (lbi.Content.Contains(account, StringComparison.Ordinal))
                                     {
                                         addItem = false;
@@ -318,25 +273,23 @@ internal sealed class MainPricing
                                 {
                                     string content = string.Format(Strings.DetailListFormat1, amount, curShort, age[0], age[1], pad, Resources.Resources.Main013_ListName, account);
                                     Vm.Result.DetailList.Add(new ListItemViewModel { Content = content, FgColor = onlineStatus == Strings.Online ? Strings.Color.LimeGreen : Strings.Color.Red });
-                                    Buffer.StatsFetchDetail[1]++;
+                                    Vm.Result.Data.StatsFetchDetail[1]++;
                                 }
                                 else
                                 {
                                     int iLastInd = Vm.Result.DetailList.Count - 1;
                                     if (iLastInd >= 0)
                                     {
-                                        ListItemViewModel lbi = Vm.Result.DetailList[^1]; // liPriceDetail.Items.Count - 1]
+                                        var lbi = Vm.Result.DetailList[^1]; // liPriceDetail.Items.Count - 1]
 
                                         int itemCount = 0;
                                         int idCount = lbi.Content.IndexOf(Resources.Resources.Main015_ListCount, StringComparison.Ordinal);
                                         if (idCount > 0)
                                         {
                                             string subLb = lbi.Content[(idCount + Resources.Resources.Main015_ListCount.Length)..].Trim();
-                                            //string subLb = lbi.Content.ToString().Substring(idCount + Resources.Resources.Main015_ListCount.Length + 1).Trim();
                                             idCount = subLb.IndexOf(' ');
                                             string subLb3 = subLb[..idCount];
                                             itemCount = int.Parse(subLb3, System.Globalization.CultureInfo.InvariantCulture);
-                                            //Int32.TryParse(subLb3, out itemCount);
                                         }
 
                                         itemCount = itemCount is 0 ? 2 : itemCount + 1;
@@ -355,7 +308,7 @@ internal sealed class MainPricing
 
                                 //key = Math.Round(amount - 0.1) + " " + key;
                                 key = amount + " " + key; // not using round
-                                if (tempFetch < Buffer.StatsFetchDetail[1]) addedData = true;
+                                if (tempFetch < Vm.Result.Data.StatsFetchDetail[1]) addedData = true;
 
                                 if (!hideSameUser || addedData && !token.IsCancellationRequested)
                                 {
@@ -395,8 +348,6 @@ internal sealed class MainPricing
                         firstKey = myList[idx];
                     }
 
-                    //result = Regex.Replace(first + " ~ " + last, @"(timeless-)?([a-z]{3})[a-z\-]+\-([a-z]+)", @"$3`$2");
-                    //StringsTable.MainStrings.ListStock[idLang]
                     string concatPrice = first != last ? first + " (" + Resources.Resources.Main022_ResultsMin + ")"
                         + Strings.LF + last + " (" + Resources.Resources.Main023_ResultsMax + ")"
                         : first + Strings.LF + Resources.Resources.Main141_ResultsSingle; // single price
@@ -426,12 +377,12 @@ internal sealed class MainPricing
                 }
             }
 
-            Buffer.StatsFetchDetail[0] = beginFetch;
-            //Buffer.StatsFetchDetail[1] += resultsLoaded;
-            Buffer.StatsFetchDetail[2] = resultCount;
-            Buffer.StatsFetchDetail[3] += unpriced;
-            Buffer.StatsFetchDetail[4] += total;
-            //Buffer.StatsFetchDetail[5] += (total - resultsLoaded);
+            Vm.Result.Data.StatsFetchDetail[0] = beginFetch;
+            //Vm.Result.Data.StatsFetchDetail[1] += resultsLoaded;
+            Vm.Result.Data.StatsFetchDetail[2] = resultCount;
+            Vm.Result.Data.StatsFetchDetail[3] += unpriced;
+            Vm.Result.Data.StatsFetchDetail[4] += total;
+            //Vm.Result.Data.StatsFetchDetail[5] += (total - resultsLoaded);
 
             if (dataToFetch.Total == 0 || currencys.Count == 0)
             {
@@ -504,7 +455,7 @@ internal sealed class MainPricing
                         string charName = string.Empty;
                         string status = string.Empty;
 
-                        whisper = valData.Listing.Whisper?.ToString(); // to test
+                        whisper = valData.Listing.Whisper;//?.ToString(); // to test
 
                         StringBuilder sbWhisper = new(whisper);
 
@@ -533,9 +484,9 @@ internal sealed class MainPricing
                         string content = string.Format(StrFormat.Bulk, sellerAmount, ReplaceCurrencyChars(sellerCurrency), buyerAmount, ReplaceCurrencyChars(buyerCurrency), sellerStock, charName); // account
                         string tag = string.Empty;
                         string tip = null;
-                        if (Buffer.NinjaChaosEqGet > 0 && Buffer.NinjaChaosEqPay > 0)
+                        if (Vm.Result.Data.NinjaChaosEqGet > 0 && Vm.Result.Data.NinjaChaosEqPay > 0)
                         {
-                            double ratio = Math.Round(sellerAmount * Buffer.NinjaChaosEqGet / (buyerAmount * Buffer.NinjaChaosEqPay), 2);
+                            double ratio = Math.Round(sellerAmount * Vm.Result.Data.NinjaChaosEqGet / (buyerAmount * Vm.Result.Data.NinjaChaosEqPay), 2);
                             tip = Resources.Resources.Main195_Ratio + " : " + ratio;
                             tag = ratio >= 1.2 ? "emoji_vhappy" : ratio >= 1 ? "emoji_happy" : ratio >= 0.90 ? "emoji_neutral" : ratio >= 0.80 ? "emoji_crying" : "emoji_angry";
                         }
@@ -543,11 +494,11 @@ internal sealed class MainPricing
                         Vm.Result.BulkList.Add(new ListItemViewModel { Index = Vm.Result.BulkList.Count, Content = content, ToolTip = tip, Tag = tag, FgColor = onlineStatus == Strings.Online ? status == Strings.afk ? Strings.Color.YellowGreen : Strings.Color.LimeGreen : Strings.Color.Red });
                         Vm.Result.BulkOffers.Add(new Tuple<FetchDataListing, OfferInfo>(valData.Listing, valData.Listing.Offers[0]));//sbWhisper.ToString()
 
-                        Buffer.StatsFetchBulk[1]++;
+                        Vm.Result.Data.StatsFetchBulk[1]++;
 
                         string replace = @"$3`$2";
-                        string cur0 = RegexUtil.LetterTimelessPattern().Replace(Buffer.ExchangeCurrency[0], replace);
-                        string cur1 = RegexUtil.LetterTimelessPattern().Replace(Buffer.ExchangeCurrency[1], replace);
+                        string cur0 = RegexUtil.LetterTimelessPattern().Replace(Vm.Result.Data.ExchangeCurrency[0], replace);
+                        string cur1 = RegexUtil.LetterTimelessPattern().Replace(Vm.Result.Data.ExchangeCurrency[1], replace);
 
                         key = amount < 1 ? Math.Round(1 / amount, 1) + " " + cur1 : Math.Round(amount, 1) + " " + cur0;
 
@@ -561,7 +512,7 @@ internal sealed class MainPricing
                 }
             }
 
-            Buffer.StatsFetchBulk[2] = resultCount;
+            Vm.Result.Data.StatsFetchBulk[2] = resultCount;
 
             if (data.Total == 0)
             {
@@ -637,7 +588,7 @@ internal sealed class MainPricing
                             string whisper = string.Empty;
                             string charName = string.Empty;
 
-                            whisper = valData.Listing.Whisper?.ToString(); // to test
+                            whisper = valData.Listing.Whisper;//?.ToString(); // to test
 
                             StringBuilder sbWhisper = new(whisper);
 

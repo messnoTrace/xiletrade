@@ -765,6 +765,32 @@ in seconds before cancelling.</comment>
     <comment>Update automatically all filters used by Xiletrade on start.
 (from github repository and GGG official website)</comment>
   </data>
+  <data name="Config156_checkCtrlWheel" xml:space="preserve">
+    <value>Will send a left mouse click whenever the mouse wheel is triggered while holding the CTRL key.
+Only works when the POE game window is active.</value>
+    <comment>Will send a left mouse click whenever the mouse wheel is triggered while holding the CTRL key.
+Only works when the POE game window is active.</comment>
+  </data>
+  <data name="Config157_lbRegex" xml:space="preserve">
+    <value>Regex manager</value>
+    <comment>Regex manager</comment>
+  </data>
+  <data name="Config158_lbRegexTip" xml:space="preserve">
+    <value>Display Xiletrade regex manager window.</value>
+    <comment>Display Xiletrade regex manager window.</comment>
+  </data>
+  <data name="Config159_cbGameConfigTip" xml:space="preserve">
+    <value>Choose your game version.</value>
+    <comment>Choose your game version.</comment>
+  </data>
+  <data name="Config160_lbBindMouse" xml:space="preserve">
+    <value>CTRL + mouse wheel :</value>
+    <comment>CTRL + mouse wheel :</comment>
+  </data>
+  <data name="Config161_checkLeftClick" xml:space="preserve">
+    <value>Bind to left click</value>
+    <comment>Bind to left click</comment>
+  </data>
   <data name="General001_Anomalous" xml:space="preserve">
     <value>Anomalous</value>
     <comment>Anomalous</comment>
@@ -1385,6 +1411,7 @@ in seconds before cancelling.</comment>
   </data>
   <data name="ItemClass_sanctumRelic" xml:space="preserve">
     <value>Relics</value>
+	<comment>Relics</comment>
   </data>
   <data name="ItemClass_sanctumResearch" xml:space="preserve">
     <value>Sanctum Research</value>
@@ -1413,6 +1440,42 @@ in seconds before cancelling.</comment>
   <data name="ItemClass_warstaff" xml:space="preserve">
     <value>Warstaves</value>
     <comment>Warstaves</comment>
+  </data>
+  <data name="ItemClass_trialCoins" xml:space="preserve">
+    <value>Trial Coins</value>
+    <comment>Trial Coins</comment>
+  </data>
+  <data name="ItemClass_expeditionLogbooks" xml:space="preserve">
+    <value>Expedition Logbooks</value>
+    <comment>Expedition Logbooks</comment>
+  </data>
+  <data name="ItemClass_inscribedUltimatum" xml:space="preserve">
+    <value>Inscribed Ultimatum</value>
+    <comment>Inscribed Ultimatum</comment>
+  </data>
+  <data name="ItemClass_omen" xml:space="preserve">
+    <value>Omen</value>
+    <comment>Omen</comment>
+  </data>
+  <data name="ItemClass_socketable" xml:space="preserve">
+    <value>Socketable</value>
+    <comment>Socketable</comment>
+  </data>
+  <data name="ItemClass_skillGems" xml:space="preserve">
+    <value>Skill Gems</value>
+    <comment>Skill Gems</comment>
+  </data>
+  <data name="ItemClass_supportGems" xml:space="preserve">
+    <value>Support Gems</value>
+    <comment>Support Gems</comment>
+  </data>
+  <data name="ItemClass_tablet" xml:space="preserve">
+    <value>Tablet</value>
+    <comment>Tablet</comment>
+  </data>
+  <data name="ItemClass_waystones" xml:space="preserve">
+    <value>Waystones</value>
+    <comment>Waystones</comment>
   </data>
   <data name="Main001_PriceSelect" xml:space="preserve">
     <value>Select currencies :

@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Linq;
-using Xiletrade.Library.ViewModels;
+using Xiletrade.Library.ViewModels.Main;
 using Xiletrade.Library.Models;
 using System.Collections.Generic;
 using System.Windows.Media;
@@ -89,7 +89,7 @@ public partial class MainView : ViewBase
             var modbis = FindVisualChildren<TextBox>(item).Where(x => x.Name is "modbis").FirstOrDefault();
             var select = FindVisualChildren<CheckBox>(item).Where(x => x.Name is "select").FirstOrDefault();
 
-            var bind = new InputBinding((DataContext as MainViewModel).Commands.SelectMod, new MouseGesture(MouseAction.LeftDoubleClick))
+            var bind = new InputBinding((DataContext as MainViewModel).Commands.SelectModCommand, new MouseGesture(MouseAction.LeftDoubleClick))
             {
                 CommandParameter = select
             };

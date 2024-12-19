@@ -596,6 +596,25 @@
     <value>自动更新 Xiletrade 在启动时使用的所有过滤器
 （来自 github 存储库和 GGG 官方网站）</value>
   </data>
+  <data name="Config156_checkCtrlWheel" xml:space="preserve">
+    <value>按住 CTRL 键并触发鼠标滚轮时，将发送鼠标左键单击。
+仅在 POE 游戏窗口处于活动状态时有效。</value>
+  </data>
+  <data name="Config157_lbRegex" xml:space="preserve">
+    <value>正则表达式管理器</value>
+  </data>
+  <data name="Config158_lbRegexTip" xml:space="preserve">
+    <value>显示 Xiletrade 正则表达式管理器窗口。</value>
+  </data>
+  <data name="Config159_cbGameConfigTip" xml:space="preserve">
+    <value>选择您的游戏版本。</value>
+  </data>
+  <data name="Config160_lbBindMouse" xml:space="preserve">
+    <value>CTRL + 鼠标滚轮：</value>
+  </data>
+  <data name="Config161_checkLeftClick" xml:space="preserve">
+    <value>绑定到左键单击</value>
+  </data>
   <data name="General001_Anomalous" xml:space="preserve">
     <value>异常</value>
   </data>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using Xiletrade.Library.Models.Collections;
 using Xiletrade.Library.Models.Serializable;
 using Xiletrade.Library.Services;
@@ -7,17 +8,19 @@ using Xiletrade.Library.ViewModels.Command;
 
 namespace Xiletrade.Library.ViewModels;
 
-public sealed class WhisperViewModel : BaseViewModel
+public sealed partial class WhisperViewModel : ViewModelBase
 {
+    [ObservableProperty]
     private string message = string.Empty;
-    private string charName;
-    private string labelAccount;
-    private AsyncObservableCollection<OfferViewModel> offers = new();
 
-    public string Message { get => message; set => SetProperty(ref message, value); }
-    public string CharName { get => charName; set => SetProperty(ref charName, value); }
-    public string LabelAccount { get => labelAccount; set => SetProperty(ref labelAccount, value); }
-    public AsyncObservableCollection<OfferViewModel> Offers { get => offers; set => SetProperty(ref offers, value); }
+    [ObservableProperty]
+    private string charName;
+
+    [ObservableProperty]
+    private string labelAccount;
+
+    [ObservableProperty]
+    private AsyncObservableCollection<WhisperOfferViewModel> offers = new();
 
     public WhisperCommand Commands { get; private set; }
 
@@ -25,7 +28,7 @@ public sealed class WhisperViewModel : BaseViewModel
     {
         Commands = new(this);
 
-        Message = data.Item1.Whisper?.ToString();
+        Message = data.Item1.Whisper;//?.ToString();
 
         CharName = data.Item1.Account.LastCharacterName;
         LabelAccount = Resources.Resources.Whisper001_lblAccount + " " + CharName;
@@ -37,7 +40,7 @@ public sealed class WhisperViewModel : BaseViewModel
             //var offers = data.Item1.Offers;
             foreach (var offer in offers)
             {
-                OfferViewModel offerVm = new();
+                WhisperOfferViewModel offerVm = new();
                 offerVm.SellerAmount = offer.Item.Amount;
                 offerVm.SellerCurrency = offer.Item.Currency;
                 offerVm.GetMessage = offer.Item.Whisper;
@@ -102,7 +105,7 @@ public sealed class WhisperViewModel : BaseViewModel
     {
         foreach (CurrencyResultData resDat in DataManager.Currencies)
         {
-            if (resDat.Label is not null && resDat.Id is not Strings.CurrencyType.Cards && !resDat.Id.Contains(Strings.Maps, StringComparison.Ordinal))
+            if (resDat.Label is not null && resDat.Id is not Strings.CurrencyTypePoe1.Cards && !resDat.Id.Contains(Strings.Maps, StringComparison.Ordinal))
             {
                 foreach (CurrencyEntrie entrie in resDat.Entries)
                 {

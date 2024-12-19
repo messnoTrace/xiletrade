@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Xiletrade.Library.Models.Enums;
 using Xiletrade.Library.Services.Interface;
@@ -11,10 +12,12 @@ namespace Xiletrade.Library.Services;
 public sealed class XiletradeService
 {
     private static IServiceProvider _serviceProvider;
-    
+
     // public members
+    public static SynchronizationContext UiThreadContext { get; } = SynchronizationContext.Current;
     public nint MainHwnd { get; set; }
     public string ChatKey { get { return HotKey.ChatKey; } }
+    public bool IsPoe2 { get => DataManager.Config.Options.GameVersion is not 0; }
 
     // constructor
     public XiletradeService(IServiceProvider serviceProvider) // WIP services
@@ -33,7 +36,7 @@ public sealed class XiletradeService
             DataFilters.Initialize(_serviceProvider);
             if (DataManager.Config.Options.CheckFilters)
             {
-                DataFilters.Update();
+                DataFilters.Update(); //updateGenerated: false
             }
             if (DataManager.Config.Options.CheckUpdates)
             {
@@ -53,4 +56,8 @@ public sealed class XiletradeService
             _serviceProvider.GetRequiredService<INavigationService>().ShutDownXiletrade();
         }
     }
+
+    // Not used for now
+    public void DelegateToUi(Action action) => UiThreadContext.Send(_ => action(), null);
+    public void DelegateToUiASync(Action action) => UiThreadContext.Post(_ => action(), null);
 }

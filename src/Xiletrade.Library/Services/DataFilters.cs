@@ -7,7 +7,7 @@ using System.Net.Http;
 using System.Linq;
 using System.Text;
 using Xiletrade.Library.Models.Serializable;
-using Xiletrade.Library.ViewModels;
+using Xiletrade.Library.ViewModels.Config;
 using System.IO;
 using Xiletrade.Library.Models.Enums;
 using Xiletrade.Library.Shared;
@@ -28,7 +28,7 @@ internal static class DataFilters
         _serviceProvider = serviceProvider;
     }
     
-    internal static void Update(ConfigViewModel cfgVm = null, bool allFilters = false)
+    internal static void Update(ConfigViewModel cfgVm = null, bool allLanguages = false, bool updateGenerated = true)
     {
         Task taskMess = new(() =>
         {
@@ -43,21 +43,24 @@ internal static class DataFilters
                 cfgVm.General.BtnUpdateEnable = false;
             }
 
-            var cult = cfgVm is null || allFilters ? string.Empty : " (" + Strings.Culture[cfgVm.General.LanguageIndex] + ")";
-            var cultStart = cfgVm is not null ? allFilters ? 0 : cfgVm.General.LanguageIndex : DataManager.Config.Options.Language;
-            var cultStop = allFilters ? Strings.Culture.Length : (cfgVm is not null ? cfgVm.General.LanguageIndex : DataManager.Config.Options.Language) + 1;
+            var cult = cfgVm is null || allLanguages ? string.Empty : " (" + Strings.Culture[cfgVm.General.LanguageIndex] + ")";
+            var cultStart = cfgVm is not null ? allLanguages ? 0 : cfgVm.General.LanguageIndex : DataManager.Config.Options.Language;
+            var cultStop = allLanguages ? Strings.Culture.Length : (cfgVm is not null ? cfgVm.General.LanguageIndex : DataManager.Config.Options.Language) + 1;
 
             for (int i = cultStart; i < cultStop; i++)
             {
                 taskList.Add(LeaguesUpdate(i));
                 taskList.Add(FilterDataUpdates(i));
                 taskList.Add(CurrencyUpdate(i));
-                taskList.Add(BaseUpdate(i, Strings.File.Bases));
-                taskList.Add(BaseUpdate(i, Strings.File.Mods));
-                taskList.Add(BaseUpdate(i, Strings.File.Monsters));
-                taskList.Add(WordUpdate(i));
-                taskList.Add(GemUpdate(i));
                 taskList.Add(RuleUpdate(i));
+                if (updateGenerated)
+                {
+                    taskList.Add(BaseUpdate(i, Strings.File.Bases));
+                    taskList.Add(BaseUpdate(i, Strings.File.Mods));
+                    taskList.Add(BaseUpdate(i, Strings.File.Monsters));
+                    taskList.Add(WordUpdate(i));
+                    taskList.Add(GemUpdate(i));
+                }
             }
             taskList.Add(DivinationUpdate());
 
@@ -113,7 +116,7 @@ internal static class DataFilters
     private static Task FilterDataUpdates(int idxLang)
     {
         string path = Path.GetFullPath("Data\\Lang\\");
-        string urlStats = Strings.UpdateApi[idxLang] + "stats";
+        string urlStats = Strings.GetUpdateApi(idxLang) + "stats";
         Task task = null;
         if (idxLang >= 0 && idxLang < Strings.Culture.Length)
         {
@@ -121,7 +124,7 @@ internal static class DataFilters
             {
                 try
                 {
-                    if (Uri.TryCreate(Strings.UpdateApi[idxLang], UriKind.Absolute, out Uri res)) // res not used
+                    if (Uri.TryCreate(Strings.GetUpdateApi(idxLang), UriKind.Absolute, out Uri res)) // res not used
                     {
                         Thread.Sleep(200);
                         var service = _serviceProvider.GetRequiredService<NetService>();
@@ -175,7 +178,7 @@ internal static class DataFilters
     private static Task LeaguesUpdate(int idxLang)
     {
         string path = Path.GetFullPath("Data\\Lang\\");
-        string urlStats = Strings.UpdateApi[idxLang] + "leagues";
+        string urlStats = Strings.GetUpdateApi(idxLang) + "leagues";
         Task task = null;
 
         if (idxLang >= 0 && idxLang < Strings.Culture.Length)
@@ -184,7 +187,7 @@ internal static class DataFilters
             {
                 try
                 {
-                    if (Uri.TryCreate(Strings.UpdateApi[idxLang], UriKind.Absolute, out Uri res)) // res not used
+                    if (Uri.TryCreate(Strings.GetUpdateApi(idxLang), UriKind.Absolute, out Uri res)) // res not used
                     {
                         Thread.Sleep(200);
                         var service = _serviceProvider.GetRequiredService<NetService>();
@@ -244,7 +247,7 @@ internal static class DataFilters
     private static Task CurrencyUpdate(int idxLang)
     {
         string path = Path.GetFullPath("Data\\Lang\\");
-        string urlStats = Strings.UpdateApi[idxLang] + "static";
+        string urlStats = Strings.GetUpdateApi(idxLang) + "static";
         Task task = null;
 
         if (idxLang >= 0 && idxLang < Strings.Culture.Length)
@@ -253,7 +256,7 @@ internal static class DataFilters
             {
                 try
                 {
-                    if (Uri.TryCreate(Strings.UpdateApi[idxLang], UriKind.Absolute, out Uri res)) // res not used
+                    if (Uri.TryCreate(Strings.GetUpdateApi(idxLang), UriKind.Absolute, out Uri res)) // res not used
                     {
                         Thread.Sleep(200);
                         var service = _serviceProvider.GetRequiredService<NetService>();

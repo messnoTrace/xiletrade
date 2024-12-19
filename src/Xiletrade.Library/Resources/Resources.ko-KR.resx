@@ -593,6 +593,25 @@
     <value>시작 시 Xiletrade가 사용하는 모든 필터를 자동으로 업데이트합니다
 (github 저장소 및 GGG 공식 웹사이트에서).</value>
   </data>
+  <data name="Config156_checkCtrlWheel" xml:space="preserve">
+    <value>CTRL 키를 누른 상태에서 마우스 휠이 트리거될 때마다 왼쪽 마우스 클릭을 보냅니다.
+POE 게임 창이 활성화된 경우에만 작동합니다.</value>
+  </data>
+  <data name="Config157_lbRegex" xml:space="preserve">
+    <value>정규식 관리자</value>
+  </data>
+  <data name="Config158_lbRegexTip" xml:space="preserve">
+    <value>Xiletrade 정규식 관리자 창을 표시합니다.</value>
+  </data>
+  <data name="Config159_cbGameConfigTip" xml:space="preserve">
+    <value>게임 버전을 선택하세요.</value>
+  </data>
+  <data name="Config160_lbBindMouse" xml:space="preserve">
+    <value>CTRL + 마우스 휠 :</value>
+  </data>
+  <data name="Config161_checkLeftClick" xml:space="preserve">
+    <value>왼쪽 클릭에 바인딩</value>
+  </data>
   <data name="General001_Anomalous" xml:space="preserve">
     <value>기묘한</value>
   </data>

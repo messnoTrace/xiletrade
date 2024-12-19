@@ -99,7 +99,7 @@ internal sealed class DataManager
 
         return true;
     }
-
+    
     private static bool InitSettings() // can be refactored
     {
         var init = Instance;
@@ -139,17 +139,7 @@ internal sealed class DataManager
                 Mods = new List<BaseResultData>();
                 Mods.AddRange(data.Result[0].Data);
             }
-            /*
-            fs = new FileStream(path + lang + Strings.File.PROPHECIES, FileMode.Open);
-            using (StreamReader reader = new(fs))
-            {
-                fs = null;
-                string json = reader.ReadToEnd();
-                BaseData data = Json.Deserialize<BaseData>(json);
-                Prophecies = new List<BaseResultData>();
-                Prophecies.AddRange(data.Result[0].Data);
-            }
-            */
+
             fs = new FileStream(path + lang + Strings.File.Monsters, FileMode.Open);
             using (StreamReader reader = new(fs))
             {
@@ -175,7 +165,7 @@ internal sealed class DataManager
             {
                 fs = null;
                 string json = reader.ReadToEnd();
-                Filter = Json.Deserialize<FilterData>(json);
+                Filter = Json.Deserialize<FilterData>(json).ArrangeFilter(Config.Options.GameVersion);
             }
 
             fs = new FileStream(path + Strings.File.Divination, FileMode.Open);
@@ -187,15 +177,7 @@ internal sealed class DataManager
                 DivTiers = new List<DivTiersResult>();
                 DivTiers.AddRange(data.Result);
             }
-            /*
-            fs = new FileStream(path + "Uniques.json", FileMode.Open);
-            using (StreamReader reader = new StreamReader(fs))
-            {
-                fs = null;
-                string json = reader.ReadToEnd();
-                Uniques = Json.Deserialize<UniquesData>(json);
-            }
-            */
+
             fs = new FileStream(path + lang + Strings.File.Words, FileMode.Open);
             using (StreamReader reader = new(fs))
             {
@@ -233,7 +215,7 @@ internal sealed class DataManager
             {
                 fs = null;
                 string json = reader.ReadToEnd();
-                FilterEn = Json.Deserialize<FilterData>(json);
+                FilterEn = Json.Deserialize<FilterData>(json).ArrangeFilter(Config.Options.GameVersion);
             }
             fs = new FileStream(path + lang + Strings.File.Currency, FileMode.Open);
             using (StreamReader reader = new(fs))
